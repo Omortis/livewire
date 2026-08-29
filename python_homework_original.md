@@ -29,6 +29,8 @@ Create a 1D NumPy array representing voltage magnitudes (in per-unit) at 5 buses
 
 **Your Answer**:
 ```python
+#!/usr/bin/env python3
+
 import numpy as np
 
 a = np.array([1.02, 0.98, 1.00, 1.03, 0.99])
@@ -37,10 +39,6 @@ print("a         : ", a)
 print("Shape     : ", a.shape)
 print("Array type: ", a.dtype)
 
-# Output:
-# a         :  [1.02 0.98 1.   1.03 0.99]
-# Shape     :  (5,)
-# Array type:  float64
 ```
 
 ---
@@ -56,6 +54,8 @@ Print the matrix and verify it is symmetric.
 
 **Your Answer**:
 ```python
+#!/usr/bin/env python3
+
 import numpy as np
 
 ybus = np.array([
@@ -69,12 +69,6 @@ print("ybus:\n", ybus)
 is_symmetric = np.array_equal(ybus, ybus.T)
 print(f"ybus is symmetrical: {is_symmetric}")
 
-# Output:
-# ybus:
-#  [[10 -2 -2]
-#  [-2 10 -2]
-#  [-2 -2 10]]
-# ybus is symmetrical: True
 ```
 
 ---
@@ -88,37 +82,7 @@ Given two arrays `V = [1.0, 1.02, 0.98]` and `angle = [0, 0.1, -0.05]` (in radia
 
 **Your Answer**:
 ```python
-import numpy as np
-
-np.set_printoptions(formatter={"float_kind": "{:.4f}".format})
-
-V = np.array([1.0, 1.02, 0.98])  # voltage
-angle = np.array([0, 0.1, -0.05])  # radians
-I = np.array([1 + 0.5j, 0.8 - 0.2j, 1.2 + 0.3j])  # current
-
-I_conj = np.conjugate(I)
-
-V_complex = V * np.exp(1j * angle)
-
-S_complex = V_complex * I_conj
-
-print("V          : ", V)
-print("V_complex  : ", V_complex)
-print("I          : ", I)
-print("I conjugate: ", I_conj)
-print("S_complex  : ")
-for complex_power in S_complex:
-    print(f"\tP: {complex_power.real:6.3f} \tQ: {complex_power.imag:6.3f}")
-
-# Output:
-# V          :  [1.0000 1.0200 0.9800]
-# V_complex  :  [1.        +0.j         1.01490425+0.10183008j 0.97877526-0.04897959j]
-# I          :  [1. +0.5j 0.8-0.2j 1.2+0.3j]
-# I conjugate:  [1. -0.5j 0.8+0.2j 1.2-0.3j]
-# S_complex  :
-#         P:  1.000       Q: -0.500
-#         P:  0.792       Q:  0.284
-#         P:  1.160       Q: -0.352
+# Write your code here
 ```
 
 ---
