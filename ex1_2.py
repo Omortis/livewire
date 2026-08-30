@@ -9,7 +9,6 @@ ybus = np.array([
                 ])
 
 print("ybus:\n", ybus)
-#print(ybus)
 
 is_symmetric = np.array_equal(ybus, ybus.T)
 print(f"ybus is symmetrical: {is_symmetric}")
