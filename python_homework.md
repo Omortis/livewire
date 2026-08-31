@@ -260,7 +260,44 @@ Given a 1D array of line flows (in MVA) and a 1D array of corresponding line rat
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+# Line Flow Ranges
+#        System Type         Typical Line Flow (MVA)  Typical Line Rating
+# -----------------------------------------------------------------------
+# Distribution Feeders	     1 – 10 MVA               5 - 30 MVA
+# Major Transmission Lines	 100 – 1,000 MVA          100 - 1200 MVA
+
+line_flows_mva = np.array([120, 180, 250, 480, 400, 500, 650, 1000, 1000, 1400])
+line_ratings_mva = np.array([200, 300, 400, 500, 600, 750, 900, 1100, 1400, 1800])
+
+loading_percent = (line_flows_mva / line_ratings_mva) * 100
+
+overloaded_idx = np.where(loading_percent > 90)[0]
+overloaded_pct = loading_percent[overloaded_idx]
+
+print("Line flows   (MVA):")
+print(f"\t{line_flows_mva}")
+print("Line ratings (MVA):")
+print(f"\t{line_ratings_mva}")
+print("Line loadings:")
+print(f"\t{np.round(loading_percent, decimals=2)}")
+print("Indices of overloaded lines:")
+print(f"\t{overloaded_idx}")
+print("Overloaded percents:")
+print(f"\t{np.round(overloaded_pct, decimals=2)}")
+
+# Output:
+# Line flows   (MVA):
+#         [ 120  180  250  480  400  500  650 1000 1000 1400]
+# Line ratings (MVA):
+#         [ 200  300  400  500  600  750  900 1100 1400 1800]
+# Line loadings:
+#         [60.   60.   62.5  96.   66.67 66.67 72.22 90.91 71.43 77.78]
+# Indices of overloaded lines:
+#         [3 7]
+# Overloaded percents:
+#         [96.   90.91]
 ```
 
 ---
@@ -272,7 +309,34 @@ Generate a 8760-element array representing hourly load demand (MW) for a year us
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+rng = np.random.default_rng()
+
+μ = 500  # MW
+σ = 100
+# 8760 hours = 365 days × 24 hours
+hours = 365 * 24
+
+# hourly load demand (MW)
+s_mw = rng.normal(μ, σ, hours)
+
+print(f"Sample count   : {s_mw.size:8}")
+print(f"Mean           : {np.mean(s_mw):8.2f}")
+print(f"Std Dev        : {np.std(s_mw):8.2f}")
+print(f"Minimum        : {np.min(s_mw):8.2f}")
+print(f"Maximum        : {np.max(s_mw):8.2f}")
+print(f"95th percentile: {np.percentile(s_mw, 95):8.2f}")
+print(f"Hours > 700 MW : {np.sum(s_mw > 700):8}")
+
+# Output:
+# Sample count   :     8760
+# Mean           :   499.52
+# Std Dev        :   100.22
+# Minimum        :    52.51
+# Maximum        :   888.42
+# 95th percentile:   665.99
+# Hours > 700 MW :      199
 ```
 
 ---
@@ -284,7 +348,29 @@ Simulate 10,000 scenarios of total system load where each of 5 zones has a mean 
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+rng = np.random.default_rng()
+
+μ = 200  # MW
+σ = 30  # MW
+
+scenarios = 10000
+zones = 5
+zone_loads = rng.normal(μ, σ, (scenarios, zones))
+scenario_totals = np.sum(zone_loads, axis=1)
+zone_total_mean = np.mean(scenario_totals)
+zone_total_std_dev = np.std(scenario_totals)
+total_load_gt_1100_prob = np.sum(scenario_totals > 1100) / 10000
+
+print(f"Total system load mean       : {zone_total_mean:.3f} MW")
+print(f"Total system load std dev    : {zone_total_std_dev:.3f} MW")
+print(f"Prob for total load > 1100 MW: {total_load_gt_1100_prob:.3f}")
+
+# Output:
+# Total system load mean       : 1000.119 MW
+# Total system load std dev    : 66.622 MW
+# Prob for total load > 1100 MW: 0.069
 ```
 
 ---
