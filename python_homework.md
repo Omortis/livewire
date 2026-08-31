@@ -384,7 +384,32 @@ Create a DataFrame with columns `['bus_id', 'gen_id', 'p_max', 'p_min', 'fuel_ty
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+# These are ballpark realistic for a simplified system. Nuclear is cheap
+# but inflexible, coal is mid-cost, gas is expensive but flexible, wind/solar
+# have near-zero marginal cost.
+
+df = pd.DataFrame(
+    {
+        "bus_id": [1, 2, 3, 4, 5],
+        "gen_id": ["GEN_1", "GEN_2", "GEN_3", "GEN_4", "GEN_5"],
+        "p_max": [1000, 500, 400, 200, 100],
+        "p_min": [500, 100, 50, 0, 0],
+        "fuel_type": ["Nuclear", "Coal", "Gas", "Wind", "Solar"],
+        "cost_per_mwh": [25.00, 35.00, 45.00, 0.00, 0.00],
+    }
+)
+
+print(df.to_string(float_format=lambda x: f"{x:.2f}"))
+
+# Output:
+#    bus_id gen_id  p_max  p_min fuel_type  cost_per_mwh
+# 0       1  GEN_1   1000    500   Nuclear         25.00
+# 1       2  GEN_2    500    100      Coal         35.00
+# 2       3  GEN_3    400     50       Gas         45.00
+# 3       4  GEN_4    200      0      Wind          0.00
+# 4       5  GEN_5    100      0     Solar          0.00
 ```
 
 ---
