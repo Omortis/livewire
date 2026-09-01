@@ -480,7 +480,48 @@ Given a DataFrame of hourly load data with columns `['hour', 'load_mw']`, find a
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+df = pd.DataFrame({"hour": range(100), "load_mw": rng.normal(500, 100, 100)})
+
+threshold_90_percent = df["load_mw"].quantile(0.90)
+high_load = df[df["load_mw"] > threshold_90_percent]
+top_10 = df.nlargest(10, "load_mw")
+
+print(f"90th percentile load value: {threshold_90_percent:.2f}")
+print(f"Rows above the 90th percentile:\n{high_load}")
+print(f"Top 10 loads:\n{top_10}")
+
+
+# Output:
+# 90th percentile load value: 640.67
+# Rows above the 90th percentile:
+#     hour     load_mw
+# 4      4  702.210682
+# 20    20  642.747565
+# 23    23  670.589372
+# 34    34  650.098331
+# 44    44  691.611243
+# 57    57  664.508742
+# 71    71  711.289612
+# 78    78  661.671945
+# 91    91  660.317004
+# 96    96  642.876317
+# Top 10 loads:
+#     hour     load_mw
+# 71    71  711.289612
+# 4      4  702.210682
+# 44    44  691.611243
+# 23    23  670.589372
+# 57    57  664.508742
+# 78    78  661.671945
+# 91    91  660.317004
+# 34    34  650.098331
+# 96    96  642.876317
+# 20    20  642.747565
 ```
 
 ---
