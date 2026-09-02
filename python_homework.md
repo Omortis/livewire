@@ -527,13 +527,109 @@ print(f"Top 10 loads:\n{top_10}")
 ---
 
 ### Exercise 2.4: Time Series Resampling
-Create a DataFrame with 30 days of hourly generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). Compute the daily average generation for each generator and the total daily generation across all generators.
+Create a DataFrame with 30 days of **hourly** generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). This gives you 720 rows (30 days × 24 hours). The index should be a DatetimeIndex with hourly timestamps.
 
-*Note: Resampling is essential for analyzing time-series data. Day-ahead markets use hourly schedules, while long-term planning uses daily/weekly averages.*
+Then perform two resampling operations:
+1. **Daily average** for each generator — use `df.resample('D').mean()` to get the average generation per day for each generator type
+2. **Total daily generation** across all generators — use `df.resample('D').sum().sum(axis=1)` to get the total system generation for each day
+
+*Why resampling?* Power system data is collected at high frequency (hourly or 5-minute intervals from SCADA systems). But day-ahead electricity markets use daily schedules, and monthly/quarterly planning reports need daily or weekly summaries. Resampling is the standard tool for aggregating high-frequency time-series data to the resolution needed for the analysis at hand. It's also critical for aligning data with different time granularities — e.g., merging hourly generation data with daily fuel price data.
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+samples = 30*24 # 30 days, 24 hours
+
+timestamps = pd.date_range(start='2026-09-01', periods=samples, freq='h')
+
+df = pd.DataFrame(
+    {
+        "coal": rng.uniform(100, 300, samples),
+        "gas": rng.uniform(20, 80, samples),
+        "nuclear": rng.uniform(280, 300, samples),
+        "wind": rng.uniform(0, 200, samples),
+        "solar": rng.uniform(0, 100, samples), # should be a half-sine wave repeated daily
+    },
+    index = timestamps
+)
+
+# https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
+daily_mean = df.resample("D").mean()
+daily_total = df.resample("D").sum().sum(axis=1)
+
+print(f"daily_mean:\n{daily_mean.round(2)}\n")
+print(f"daily_total:\n{daily_total.round(2)}")
+
+# Output:
+# daily_mean:
+#              coal   gas  nuclear   wind  solar
+# 2026-09-01 211.44 61.14   288.50 102.12  49.84
+# 2026-09-02 206.07 53.62   291.38  94.80  41.48
+# 2026-09-03 212.02 48.07   291.91 100.03  50.03
+# 2026-09-04 210.70 46.14   290.00 112.86  55.81
+# 2026-09-05 180.99 55.32   290.92  90.63  46.54
+# 2026-09-06 203.15 46.91   290.69 102.18  52.25
+# 2026-09-07 202.36 48.88   291.72  99.54  48.83
+# 2026-09-08 187.19 45.80   290.98 119.39  52.39
+# 2026-09-09 194.66 50.70   289.87 116.49  50.19
+# 2026-09-10 221.22 52.30   290.44 107.07  50.60
+# 2026-09-11 199.64 47.66   289.84  78.19  42.63
+# 2026-09-12 190.08 50.13   291.14  83.20  51.58
+# 2026-09-13 221.88 45.67   290.21 102.66  43.99
+# 2026-09-14 204.67 50.93   290.27  96.19  50.61
+# 2026-09-15 184.40 43.74   290.23 101.97  55.87
+# 2026-09-16 207.65 46.49   289.32  99.34  52.29
+# 2026-09-17 212.45 50.62   291.27  95.06  47.12
+# 2026-09-18 204.87 52.55   288.20  94.22  58.62
+# 2026-09-19 213.34 50.10   290.73 101.89  53.77
+# 2026-09-20 208.12 47.21   289.42  89.56  55.89
+# 2026-09-21 196.22 52.15   289.54 101.84  54.68
+# 2026-09-22 213.18 53.56   291.77 101.13  58.01
+# 2026-09-23 200.53 47.14   290.81 117.34  60.87
+# 2026-09-24 200.80 52.84   289.83  94.16  46.62
+# 2026-09-25 180.00 52.23   290.21 100.29  54.45
+# 2026-09-26 218.80 52.76   290.35 107.62  48.54
+# 2026-09-27 193.27 51.93   290.06  95.29  58.65
+# 2026-09-28 229.99 48.46   291.55  95.53  42.19
+# 2026-09-29 196.53 50.30   291.92 113.27  51.22
+# 2026-09-30 187.04 52.39   289.00 107.88  44.39
+
+# daily_total:
+# 2026-09-01   17112.99
+# 2026-09-02   16496.32
+# 2026-09-03   16849.33
+# 2026-09-04   17172.15
+# 2026-09-05   15945.63
+# 2026-09-06   16684.42
+# 2026-09-07   16592.16
+# 2026-09-08   16697.84
+# 2026-09-09   16845.35
+# 2026-09-10   17319.21
+# 2026-09-11   15790.97
+# 2026-09-12   15987.23
+# 2026-09-13   16905.84
+# 2026-09-14   16623.95
+# 2026-09-15   16229.03
+# 2026-09-16   16682.26
+# 2026-09-17   16716.62
+# 2026-09-18   16762.92
+# 2026-09-19   17035.95
+# 2026-09-20   16564.97
+# 2026-09-21   16666.25
+# 2026-09-22   17223.56
+# 2026-09-23   17200.53
+# 2026-09-24   16422.07
+# 2026-09-25   16252.33
+# 2026-09-26   17233.75
+# 2026-09-27   16540.80
+# 2026-09-28   16985.30
+# 2026-09-29   16877.97
+# 2026-09-30   16336.97
+# Freq: D, dtype: float64
 ```
 
 ---
