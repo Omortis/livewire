@@ -760,9 +760,36 @@ You have a DataFrame of contingency analysis results with columns `['contingency
 
 *Note: Contingency analysis simulates "what if" scenarios (e.g., what if a line trips). NERC standards require utilities to analyze single contingencies.*
 
+*What the columns mean:*
+- **`pre_flow`** = power flow on the line under normal operating conditions (before any contingency)
+- **`post_flow`** = power flow on the line after a simulated contingency (e.g., another line tripped, causing power to reroute through this line)
+- **`loading_percent`** = how loaded the line is after the contingency, as a percentage of its thermal rating
+
+*The goal:* Identify the worst-case loading for each line across all possible single contingencies. This tells operators which lines are most vulnerable to overload if another part of the network fails.
+
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+df = pd.DataFrame({
+    'contingency_id': ['C1', 'C1', 'C1', 'C2', 'C2', 'C2'],
+    'line_id': ['L1', 'L2', 'L3', 'L1', 'L2', 'L3'],
+    'pre_flow': [100, 200, 150, 100, 200, 150],
+    'post_flow': [110, 220, 140, 105, 210, 160],
+    'loading_percent': [55, 88, 70, 52.5, 84, 80]
+})
+
+max_loading_percent = df.groupby('line_id')['loading_percent'].agg("max")
+
+print(f"max_loading_percent:\n{max_loading_percent}")
+
+# Output
+# max_loading_percent:
+# line_id
+# L1    55.0
+# L2    88.0
+# L3    80.0
+# Name: loading_percent, dtype: float64
 ```
 
 ---
