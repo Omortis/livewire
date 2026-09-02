@@ -164,7 +164,7 @@ Create a DataFrame with columns `['bus_id', 'gen_id', 'p_max', 'p_min', 'fuel_ty
 ---
 
 ### Exercise 2.2: Cleaning Missing Measurements
-Load a CSV file of hourly SCADA measurements (create a synthetic DataFrame with 100 rows and columns `['timestamp', 'voltage', 'power', 'frequency']`). Introduce 10 missing values at random positions. Replace missing values with the column mean and count how many values were imputed.
+Create a synthetic DataFrame with 100 rows and columns `['timestamp', 'voltage', 'power', 'frequency']` using realistic ranges. Introduce 10 missing values at random positions. Replace missing values with the column mean and count how many values were imputed.
 
 *Note: SCADA (Supervisory Control and Data Acquisition) systems collect real-time measurements from substations. Missing data is common due to communication issues.*
 
@@ -188,9 +188,13 @@ Given a DataFrame of hourly load data with columns `['hour', 'load_mw']`, find a
 ---
 
 ### Exercise 2.4: Time Series Resampling
-Create a DataFrame with 30 days of hourly generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). Compute the daily average generation for each generator and the total daily generation across all generators.
+Create a DataFrame with 30 days of **hourly** generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). This gives you 720 rows (30 days × 24 hours). The index should be a DatetimeIndex with hourly timestamps.
 
-*Note: Resampling is essential for analyzing time-series data. Day-ahead markets use hourly schedules, while long-term planning uses daily/weekly averages.*
+Then perform two resampling operations:
+1. **Daily average** for each generator — use `df.resample('D').mean()` to get the average generation per day for each generator type
+2. **Total daily generation** across all generators — use `df.resample('D').sum().sum(axis=1)` to get the total system generation for each day
+
+*Why resampling?* Power system data is collected at high frequency (hourly or 5-minute intervals from SCADA systems). But day-ahead electricity markets use daily schedules, and monthly/quarterly planning reports need daily or weekly summaries. Resampling is the standard tool for aggregating high-frequency time-series data to the resolution needed for the analysis at hand. It's also critical for aligning data with different time granularities — e.g., merging hourly generation data with daily fuel price data.
 
 **Your Answer**:
 ```python
@@ -227,6 +231,13 @@ Given a DataFrame of generators with columns `['gen_id', 'fuel_type', 'capacity'
 You have a DataFrame of contingency analysis results with columns `['contingency_id', 'line_id', 'pre_flow', 'post_flow', 'loading_percent']`. Find the maximum `loading_percent` for each line across all contingencies.
 
 *Note: Contingency analysis simulates "what if" scenarios (e.g., what if a line trips). NERC standards require utilities to analyze single contingencies.*
+
+*What the columns mean:*
+- **`pre_flow`** = power flow on the line under normal operating conditions (before any contingency)
+- **`post_flow`** = power flow on the line after a simulated contingency (e.g., another line tripped, causing power to reroute through this line)
+- **`loading_percent`** = how loaded the line is after the contingency, as a percentage of its thermal rating
+
+*The goal:* Identify the worst-case loading for each line across all possible single contingencies. This tells operators which lines are most vulnerable to overload if another part of the network fails.*
 
 **Your Answer**:
 ```python
