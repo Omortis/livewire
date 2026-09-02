@@ -708,7 +708,49 @@ Given a DataFrame of generators with columns `['gen_id', 'fuel_type', 'capacity'
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+df = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_2", "GEN_3", "GEN_4", "GEN_5", 
+               "GEN_6", "GEN_7", "GEN_8", "GEN_9", "GEN_10",
+               "GEN_11", "GEN_12"],
+    "fuel_type": ["Nuclear", "Coal", "Gas", "Wind", "Solar",
+                  "Nuclear", "Coal", "Gas", "Wind", "Solar", 
+                  "Coal", "Wind"],
+    "capacity": [1000, 500, 400, 200, 100, 
+                 2000, 1000, 800, 400, 200, 
+                 650, 50]
+})
+
+report = df.groupby("fuel_type")["capacity"].agg(["sum", "mean", "count"])
+
+print(f"input generator data:\n{df}\n")
+print(f"generator fleet analysis:\n{report}")
+
+# Output:
+# input generator data:
+#     gen_id fuel_type  capacity
+# 0    GEN_1   Nuclear      1000
+# 1    GEN_2      Coal       500
+# 2    GEN_3       Gas       400
+# 3    GEN_4      Wind       200
+# 4    GEN_5     Solar       100
+# 5    GEN_6   Nuclear      2000
+# 6    GEN_7      Coal      1000
+# 7    GEN_8       Gas       800
+# 8    GEN_9      Wind       400
+# 9   GEN_10     Solar       200
+# 10  GEN_11      Coal       650
+# 11  GEN_12      Wind        50
+
+# generator fleet analysis:
+#             sum         mean  count
+# fuel_type                          
+# Coal       2150   716.666667      3
+# Gas        1200   600.000000      2
+# Nuclear    3000  1500.000000      2
+# Solar       300   150.000000      2
+# Wind        650   216.666667      3
 ```
 
 ---
