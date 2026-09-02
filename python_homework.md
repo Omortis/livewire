@@ -641,7 +641,62 @@ You have two DataFrames: one with generator information (`gen_id`, `fuel_type`, 
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+# Using data similar to previous exercises
+df_gen = pd.DataFrame({
+    'gen_id': ['GEN_1', 'GEN_2', 'GEN_3', 'GEN_4', 'GEN_5'],
+    'fuel_type': ['Nuclear', 'Coal', 'Gas', 'Wind', 'Solar'],
+    'capacity': [1000, 500, 400, 200, 100]
+})
+
+df_outage = pd.DataFrame({
+    'gen_id': ['GEN_1', 'GEN_2', 'GEN_3', 'GEN_1', 'GEN_4'],
+    'start_date': ['2024-01-01', '2024-02-15', '2024-03-10', '2024-06-01', '2024-04-20'],
+    'end_date': ['2024-01-15', '2024-02-20', '2024-03-12', '2024-06-10', '2024-04-25'],
+    'outage_mw': [1000, 500, 400, 1000, 200]
+})
+
+merged = df_gen.merge(df_outage, on="gen_id")
+merged_summed = merged.groupby("fuel_type")["outage_mw"].sum()
+
+print(f"df_gen:\n{df_gen}")
+print(f"df_outage:\n{df_outage}")
+print(f"merged:\n{merged}")
+print(f"merged_summed:\n{merged_summed}")
+
+# Output:
+# df_gen:
+#   gen_id fuel_type  capacity
+# 0  GEN_1   Nuclear      1000
+# 1  GEN_2      Coal       500
+# 2  GEN_3       Gas       400
+# 3  GEN_4      Wind       200
+# 4  GEN_5     Solar       100
+# df_outage:
+#   gen_id  start_date    end_date  outage_mw
+# 0  GEN_1  2024-01-01  2024-01-15       1000
+# 1  GEN_2  2024-02-15  2024-02-20        500
+# 2  GEN_3  2024-03-10  2024-03-12        400
+# 3  GEN_1  2024-06-01  2024-06-10       1000
+# 4  GEN_4  2024-04-20  2024-04-25        200
+# merged:
+#   gen_id fuel_type  capacity  start_date    end_date  outage_mw
+# 0  GEN_1   Nuclear      1000  2024-01-01  2024-01-15       1000
+# 1  GEN_1   Nuclear      1000  2024-06-01  2024-06-10       1000
+# 2  GEN_2      Coal       500  2024-02-15  2024-02-20        500
+# 3  GEN_3       Gas       400  2024-03-10  2024-03-12        400
+# 4  GEN_4      Wind       200  2024-04-20  2024-04-25        200
+# merged_summed:
+# fuel_type
+# Coal        500
+# Gas         400
+# Nuclear    2000
+# Wind        200
+# Name: outage_mw, dtype: int64
 ```
 
 ---
