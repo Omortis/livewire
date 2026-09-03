@@ -247,7 +247,7 @@ You have a DataFrame of contingency analysis results with columns `['contingency
 ---
 
 ### Exercise 2.8: Production Cost Analysis
-Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id to fuel_type mapping), compute the total production cost for each day.
+Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id, fuel_type, and heat_rate in MMBtu/MWh), compute the total production cost for each day.
 
 *Note: Production cost = generation (MWh) × fuel price ($/MMBtu) × heat rate (MMBtu/MWh). This is the core of economic dispatch.*
 

@@ -795,13 +795,60 @@ print(f"max_loading_percent:\n{max_loading_percent}")
 ---
 
 ### Exercise 2.8: Production Cost Analysis
-Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id to fuel_type mapping), compute the total production cost for each day.
+Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id, fuel_type, and heat_rate in MMBtu/MWh), compute the total production cost for each day.
 
 *Note: Production cost = generation (MWh) × fuel price ($/MMBtu) × heat rate (MMBtu/MWh). This is the core of economic dispatch.*
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+gen_info = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_2", "GEN_3"],
+    "fuel_type": ["Nuclear", "Gas", "Coal"],
+    "heat_rate": [10.5, 7.2, 9.8]  # MMBtu per MWh
+})
+
+fuel_prices = pd.DataFrame({
+    "fuel_type": ["Nuclear", "Gas", "Coal"],
+    "price_per_mmbtu": [0.5, 3.5, 2.0],  # $ per MMBtu
+    "date": ["2024-01-01", "2024-01-01", "2024-01-01"]
+})
+
+generation = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_1", "GEN_2", "GEN_2", "GEN_3", "GEN_3"],
+    "hour": [1, 2, 1, 2, 1, 2],
+    "output_mwh": [500, 520, 300, 310, 400, 410]
+})
+
+fuel_type_heat_rate_merge = gen_info.merge(generation, on="gen_id")
+
+full_merge = fuel_type_heat_rate_merge.merge(fuel_prices, on=["fuel_type"])
+
+full_merge["cost_per_hour"] = full_merge["output_mwh"] * full_merge["heat_rate"] * full_merge["price_per_mmbtu"]
+
+total_system_cost = full_merge.groupby("date")["cost_per_hour"].sum()
+
+print(f"full_merge (before grouping):\n{full_merge}\n")
+
+print(f"total_system_cost:\n{total_system_cost}")
+
+# Output:
+# full_merge (before grouping):
+#   gen_id fuel_type  heat_rate  ...  price_per_mmbtu        date  cost_per_hour
+# 0  GEN_1   Nuclear       10.5  ...              0.5  2024-01-01         2625.0
+# 1  GEN_1   Nuclear       10.5  ...              0.5  2024-01-01         2730.0
+# 2  GEN_2       Gas        7.2  ...              3.5  2024-01-01         7560.0
+# 3  GEN_2       Gas        7.2  ...              3.5  2024-01-01         7812.0
+# 4  GEN_3      Coal        9.8  ...              2.0  2024-01-01         7840.0
+# 5  GEN_3      Coal        9.8  ...              2.0  2024-01-01         8036.0
+
+# [6 rows x 8 columns]
+
+# total_system_cost:
+# date
+# 2024-01-01    36603.0
+# Name: cost_per_hour, dtype: float64
 ```
 
 ---
