@@ -411,17 +411,64 @@ print(df.to_string(float_format=lambda x: f"{x:.2f}"))
 # 3       4  GEN_4    200      0      Wind          0.00
 # 4       5  GEN_5    100      0     Solar          0.00
 ```
-
 ---
 
 ### Exercise 2.2: Cleaning Missing Measurements
-Load a CSV file of hourly SCADA measurements (create a synthetic DataFrame with 100 rows and columns `['timestamp', 'voltage', 'power', 'frequency']`). Introduce 10 missing values at random positions. Replace missing values with the column mean and count how many values were imputed.
+Create a synthetic DataFrame with 100 rows and columns `['timestamp', 'voltage', 'power', 'frequency']` using realistic ranges. Introduce 10 missing values at random positions. Replace missing values with the column mean and count how many values were imputed.
 
 *Note: SCADA (Supervisory Control and Data Acquisition) systems collect real-time measurements from substations. Missing data is common due to communication issues.*
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+# 1. Generate 100 hourly timestamps
+timestamps = pd.date_range(start="2024-01-01", periods=100, freq="h")
+
+# 2. Synthetic SCADA data
+df = pd.DataFrame(
+    {
+        "timestamp": timestamps,
+        "voltage": rng.uniform(0.95, 1.05, 100),
+        "power": rng.uniform(100, 500, 100),
+        "frequency": rng.uniform(59.9, 60.1, 100),
+    }
+)
+
+# Pick 10 random row indices and 10 random column indices (numeric columns only: 1,2,3)
+random_rows = rng.integers(0, 100, 10)
+random_cols = rng.choice([1, 2, 3], 10)  # column indices
+
+# Introduce NaNs and record WHERE they went
+nan_locations = list(zip(random_rows, random_cols))
+for r, c in nan_locations:
+    df.iloc[r, c] = np.nan
+
+# Now fill and report
+df_filled = df.fillna(df.mean(numeric_only=True))
+print(f"Number of NaNs imputed: {len(nan_locations)}")
+print("Cells imputed:")
+for r, c in nan_locations:
+    col_name = df_filled.columns[c]
+    imputed_value = df_filled.iloc[r, c]
+    print(f"  Row {r}, Column '{col_name}', imputed value: {imputed_value:.3f}")
+
+# Output:
+# Number of NaNs imputed: 10
+# Cells imputed:
+#   Row 75, Column 'voltage', imputed value: 0.999
+#   Row 17, Column 'power', imputed value: 295.132
+#   Row 97, Column 'frequency', imputed value: 59.997
+#   Row 37, Column 'frequency', imputed value: 59.997
+#   Row 30, Column 'voltage', imputed value: 0.999
+#   Row 11, Column 'power', imputed value: 295.132
+#   Row 78, Column 'power', imputed value: 295.132
+#   Row 54, Column 'voltage', imputed value: 0.999
+#   Row 0, Column 'frequency', imputed value: 59.997
+#   Row 79, Column 'frequency', imputed value: 59.997
 ```
 
 ---
@@ -433,19 +480,156 @@ Given a DataFrame of hourly load data with columns `['hour', 'load_mw']`, find a
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+df = pd.DataFrame({"hour": range(100), "load_mw": rng.normal(500, 100, 100)})
+
+threshold_90_percent = df["load_mw"].quantile(0.90)
+high_load = df[df["load_mw"] > threshold_90_percent]
+top_10 = df.nlargest(10, "load_mw")
+
+print(f"90th percentile load value: {threshold_90_percent:.2f}")
+print(f"Rows above the 90th percentile:\n{high_load}")
+print(f"Top 10 loads:\n{top_10}")
+
+
+# Output:
+# 90th percentile load value: 640.67
+# Rows above the 90th percentile:
+#     hour     load_mw
+# 4      4  702.210682
+# 20    20  642.747565
+# 23    23  670.589372
+# 34    34  650.098331
+# 44    44  691.611243
+# 57    57  664.508742
+# 71    71  711.289612
+# 78    78  661.671945
+# 91    91  660.317004
+# 96    96  642.876317
+# Top 10 loads:
+#     hour     load_mw
+# 71    71  711.289612
+# 4      4  702.210682
+# 44    44  691.611243
+# 23    23  670.589372
+# 57    57  664.508742
+# 78    78  661.671945
+# 91    91  660.317004
+# 34    34  650.098331
+# 96    96  642.876317
+# 20    20  642.747565
 ```
 
 ---
 
 ### Exercise 2.4: Time Series Resampling
-Create a DataFrame with 30 days of hourly generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). Compute the daily average generation for each generator and the total daily generation across all generators.
+Create a DataFrame with 30 days of **hourly** generation data (one column per generator type: Coal, Gas, Nuclear, Wind, Solar). This gives you 720 rows (30 days × 24 hours). The index should be a DatetimeIndex with hourly timestamps.
 
-*Note: Resampling is essential for analyzing time-series data. Day-ahead markets use hourly schedules, while long-term planning uses daily/weekly averages.*
+Then perform two resampling operations:
+1. **Daily average** for each generator — use `df.resample('D').mean()` to get the average generation per day for each generator type
+2. **Total daily generation** across all generators — use `df.resample('D').sum().sum(axis=1)` to get the total system generation for each day
+
+*Why resampling?* Power system data is collected at high frequency (hourly or 5-minute intervals from SCADA systems). But day-ahead electricity markets use daily schedules, and monthly/quarterly planning reports need daily or weekly summaries. Resampling is the standard tool for aggregating high-frequency time-series data to the resolution needed for the analysis at hand. It's also critical for aligning data with different time granularities — e.g., merging hourly generation data with daily fuel price data.
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+samples = 30*24 # 30 days, 24 hours
+
+timestamps = pd.date_range(start='2026-09-01', periods=samples, freq='h')
+
+df = pd.DataFrame(
+    {
+        "coal": rng.uniform(100, 300, samples),
+        "gas": rng.uniform(20, 80, samples),
+        "nuclear": rng.uniform(280, 300, samples),
+        "wind": rng.uniform(0, 200, samples),
+        "solar": rng.uniform(0, 100, samples), # should be a half-sine wave repeated daily
+    },
+    index = timestamps
+)
+
+# https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects
+daily_mean = df.resample("D").mean()
+daily_total = df.resample("D").sum().sum(axis=1)
+
+print(f"daily_mean:\n{daily_mean.round(2)}\n")
+print(f"daily_total:\n{daily_total.round(2)}")
+
+# Output:
+# daily_mean:
+#              coal   gas  nuclear   wind  solar
+# 2026-09-01 211.44 61.14   288.50 102.12  49.84
+# 2026-09-02 206.07 53.62   291.38  94.80  41.48
+# 2026-09-03 212.02 48.07   291.91 100.03  50.03
+# 2026-09-04 210.70 46.14   290.00 112.86  55.81
+# 2026-09-05 180.99 55.32   290.92  90.63  46.54
+# 2026-09-06 203.15 46.91   290.69 102.18  52.25
+# 2026-09-07 202.36 48.88   291.72  99.54  48.83
+# 2026-09-08 187.19 45.80   290.98 119.39  52.39
+# 2026-09-09 194.66 50.70   289.87 116.49  50.19
+# 2026-09-10 221.22 52.30   290.44 107.07  50.60
+# 2026-09-11 199.64 47.66   289.84  78.19  42.63
+# 2026-09-12 190.08 50.13   291.14  83.20  51.58
+# 2026-09-13 221.88 45.67   290.21 102.66  43.99
+# 2026-09-14 204.67 50.93   290.27  96.19  50.61
+# 2026-09-15 184.40 43.74   290.23 101.97  55.87
+# 2026-09-16 207.65 46.49   289.32  99.34  52.29
+# 2026-09-17 212.45 50.62   291.27  95.06  47.12
+# 2026-09-18 204.87 52.55   288.20  94.22  58.62
+# 2026-09-19 213.34 50.10   290.73 101.89  53.77
+# 2026-09-20 208.12 47.21   289.42  89.56  55.89
+# 2026-09-21 196.22 52.15   289.54 101.84  54.68
+# 2026-09-22 213.18 53.56   291.77 101.13  58.01
+# 2026-09-23 200.53 47.14   290.81 117.34  60.87
+# 2026-09-24 200.80 52.84   289.83  94.16  46.62
+# 2026-09-25 180.00 52.23   290.21 100.29  54.45
+# 2026-09-26 218.80 52.76   290.35 107.62  48.54
+# 2026-09-27 193.27 51.93   290.06  95.29  58.65
+# 2026-09-28 229.99 48.46   291.55  95.53  42.19
+# 2026-09-29 196.53 50.30   291.92 113.27  51.22
+# 2026-09-30 187.04 52.39   289.00 107.88  44.39
+
+# daily_total:
+# 2026-09-01   17112.99
+# 2026-09-02   16496.32
+# 2026-09-03   16849.33
+# 2026-09-04   17172.15
+# 2026-09-05   15945.63
+# 2026-09-06   16684.42
+# 2026-09-07   16592.16
+# 2026-09-08   16697.84
+# 2026-09-09   16845.35
+# 2026-09-10   17319.21
+# 2026-09-11   15790.97
+# 2026-09-12   15987.23
+# 2026-09-13   16905.84
+# 2026-09-14   16623.95
+# 2026-09-15   16229.03
+# 2026-09-16   16682.26
+# 2026-09-17   16716.62
+# 2026-09-18   16762.92
+# 2026-09-19   17035.95
+# 2026-09-20   16564.97
+# 2026-09-21   16666.25
+# 2026-09-22   17223.56
+# 2026-09-23   17200.53
+# 2026-09-24   16422.07
+# 2026-09-25   16252.33
+# 2026-09-26   17233.75
+# 2026-09-27   16540.80
+# 2026-09-28   16985.30
+# 2026-09-29   16877.97
+# 2026-09-30   16336.97
+# Freq: D, dtype: float64
 ```
 
 ---
@@ -457,7 +641,62 @@ You have two DataFrames: one with generator information (`gen_id`, `fuel_type`, 
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+import numpy as np
+
+rng = np.random.default_rng()
+
+# Using data similar to previous exercises
+df_gen = pd.DataFrame({
+    'gen_id': ['GEN_1', 'GEN_2', 'GEN_3', 'GEN_4', 'GEN_5'],
+    'fuel_type': ['Nuclear', 'Coal', 'Gas', 'Wind', 'Solar'],
+    'capacity': [1000, 500, 400, 200, 100]
+})
+
+df_outage = pd.DataFrame({
+    'gen_id': ['GEN_1', 'GEN_2', 'GEN_3', 'GEN_1', 'GEN_4'],
+    'start_date': ['2024-01-01', '2024-02-15', '2024-03-10', '2024-06-01', '2024-04-20'],
+    'end_date': ['2024-01-15', '2024-02-20', '2024-03-12', '2024-06-10', '2024-04-25'],
+    'outage_mw': [1000, 500, 400, 1000, 200]
+})
+
+merged = df_gen.merge(df_outage, on="gen_id")
+merged_summed = merged.groupby("fuel_type")["outage_mw"].sum()
+
+print(f"df_gen:\n{df_gen}")
+print(f"df_outage:\n{df_outage}")
+print(f"merged:\n{merged}")
+print(f"merged_summed:\n{merged_summed}")
+
+# Output:
+# df_gen:
+#   gen_id fuel_type  capacity
+# 0  GEN_1   Nuclear      1000
+# 1  GEN_2      Coal       500
+# 2  GEN_3       Gas       400
+# 3  GEN_4      Wind       200
+# 4  GEN_5     Solar       100
+# df_outage:
+#   gen_id  start_date    end_date  outage_mw
+# 0  GEN_1  2024-01-01  2024-01-15       1000
+# 1  GEN_2  2024-02-15  2024-02-20        500
+# 2  GEN_3  2024-03-10  2024-03-12        400
+# 3  GEN_1  2024-06-01  2024-06-10       1000
+# 4  GEN_4  2024-04-20  2024-04-25        200
+# merged:
+#   gen_id fuel_type  capacity  start_date    end_date  outage_mw
+# 0  GEN_1   Nuclear      1000  2024-01-01  2024-01-15       1000
+# 1  GEN_1   Nuclear      1000  2024-06-01  2024-06-10       1000
+# 2  GEN_2      Coal       500  2024-02-15  2024-02-20        500
+# 3  GEN_3       Gas       400  2024-03-10  2024-03-12        400
+# 4  GEN_4      Wind       200  2024-04-20  2024-04-25        200
+# merged_summed:
+# fuel_type
+# Coal        500
+# Gas         400
+# Nuclear    2000
+# Wind        200
+# Name: outage_mw, dtype: int64
 ```
 
 ---
@@ -469,7 +708,49 @@ Given a DataFrame of generators with columns `['gen_id', 'fuel_type', 'capacity'
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+df = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_2", "GEN_3", "GEN_4", "GEN_5", 
+               "GEN_6", "GEN_7", "GEN_8", "GEN_9", "GEN_10",
+               "GEN_11", "GEN_12"],
+    "fuel_type": ["Nuclear", "Coal", "Gas", "Wind", "Solar",
+                  "Nuclear", "Coal", "Gas", "Wind", "Solar", 
+                  "Coal", "Wind"],
+    "capacity": [1000, 500, 400, 200, 100, 
+                 2000, 1000, 800, 400, 200, 
+                 650, 50]
+})
+
+report = df.groupby("fuel_type")["capacity"].agg(["sum", "mean", "count"])
+
+print(f"input generator data:\n{df}\n")
+print(f"generator fleet analysis:\n{report}")
+
+# Output:
+# input generator data:
+#     gen_id fuel_type  capacity
+# 0    GEN_1   Nuclear      1000
+# 1    GEN_2      Coal       500
+# 2    GEN_3       Gas       400
+# 3    GEN_4      Wind       200
+# 4    GEN_5     Solar       100
+# 5    GEN_6   Nuclear      2000
+# 6    GEN_7      Coal      1000
+# 7    GEN_8       Gas       800
+# 8    GEN_9      Wind       400
+# 9   GEN_10     Solar       200
+# 10  GEN_11      Coal       650
+# 11  GEN_12      Wind        50
+
+# generator fleet analysis:
+#             sum         mean  count
+# fuel_type                          
+# Coal       2150   716.666667      3
+# Gas        1200   600.000000      2
+# Nuclear    3000  1500.000000      2
+# Solar       300   150.000000      2
+# Wind        650   216.666667      3
 ```
 
 ---
@@ -479,21 +760,95 @@ You have a DataFrame of contingency analysis results with columns `['contingency
 
 *Note: Contingency analysis simulates "what if" scenarios (e.g., what if a line trips). NERC standards require utilities to analyze single contingencies.*
 
+*What the columns mean:*
+- **`pre_flow`** = power flow on the line under normal operating conditions (before any contingency)
+- **`post_flow`** = power flow on the line after a simulated contingency (e.g., another line tripped, causing power to reroute through this line)
+- **`loading_percent`** = how loaded the line is after the contingency, as a percentage of its thermal rating
+
+*The goal:* Identify the worst-case loading for each line across all possible single contingencies. This tells operators which lines are most vulnerable to overload if another part of the network fails.
+
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+df = pd.DataFrame({
+    'contingency_id': ['C1', 'C1', 'C1', 'C2', 'C2', 'C2'],
+    'line_id': ['L1', 'L2', 'L3', 'L1', 'L2', 'L3'],
+    'pre_flow': [100, 200, 150, 100, 200, 150],
+    'post_flow': [110, 220, 140, 105, 210, 160],
+    'loading_percent': [55, 88, 70, 52.5, 84, 80]
+})
+
+max_loading_percent = df.groupby('line_id')['loading_percent'].agg("max")
+
+print(f"max_loading_percent:\n{max_loading_percent}")
+
+# Output
+# max_loading_percent:
+# line_id
+# L1    55.0
+# L2    88.0
+# L3    80.0
+# Name: loading_percent, dtype: float64
 ```
 
 ---
 
 ### Exercise 2.8: Production Cost Analysis
-Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id to fuel_type mapping), compute the total production cost for each day.
+Given three DataFrames: `generation` (hourly output by gen_id), `fuel_prices` (daily price by fuel_type), and `generator_info` (gen_id, fuel_type, and heat_rate in MMBtu/MWh), compute the total production cost for each day.
 
 *Note: Production cost = generation (MWh) × fuel price ($/MMBtu) × heat rate (MMBtu/MWh). This is the core of economic dispatch.*
 
 **Your Answer**:
 ```python
-# Write your code here
+import pandas as pd
+
+gen_info = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_2", "GEN_3"],
+    "fuel_type": ["Nuclear", "Gas", "Coal"],
+    "heat_rate": [10.5, 7.2, 9.8]  # MMBtu per MWh
+})
+
+fuel_prices = pd.DataFrame({
+    "fuel_type": ["Nuclear", "Gas", "Coal"],
+    "price_per_mmbtu": [0.5, 3.5, 2.0],  # $ per MMBtu
+    "date": ["2024-01-01", "2024-01-01", "2024-01-01"]
+})
+
+generation = pd.DataFrame({
+    "gen_id": ["GEN_1", "GEN_1", "GEN_2", "GEN_2", "GEN_3", "GEN_3"],
+    "hour": [1, 2, 1, 2, 1, 2],
+    "output_mwh": [500, 520, 300, 310, 400, 410]
+})
+
+fuel_type_heat_rate_merge = gen_info.merge(generation, on="gen_id")
+
+full_merge = fuel_type_heat_rate_merge.merge(fuel_prices, on=["fuel_type"])
+
+full_merge["cost_per_hour"] = full_merge["output_mwh"] * full_merge["heat_rate"] * full_merge["price_per_mmbtu"]
+
+total_system_cost = full_merge.groupby("date")["cost_per_hour"].sum()
+
+print(f"full_merge (before grouping):\n{full_merge}\n")
+
+print(f"total_system_cost:\n{total_system_cost}")
+
+# Output:
+# full_merge (before grouping):
+#   gen_id fuel_type  heat_rate  ...  price_per_mmbtu        date  cost_per_hour
+# 0  GEN_1   Nuclear       10.5  ...              0.5  2024-01-01         2625.0
+# 1  GEN_1   Nuclear       10.5  ...              0.5  2024-01-01         2730.0
+# 2  GEN_2       Gas        7.2  ...              3.5  2024-01-01         7560.0
+# 3  GEN_2       Gas        7.2  ...              3.5  2024-01-01         7812.0
+# 4  GEN_3      Coal        9.8  ...              2.0  2024-01-01         7840.0
+# 5  GEN_3      Coal        9.8  ...              2.0  2024-01-01         8036.0
+
+# [6 rows x 8 columns]
+
+# total_system_cost:
+# date
+# 2024-01-01    36603.0
+# Name: cost_per_hour, dtype: float64
 ```
 
 ---
