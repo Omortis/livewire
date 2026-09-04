@@ -4,7 +4,7 @@ A multi-language exercise set for experienced developers building skills in powe
 
 ## Mission
 
-Relearn electrical engineering fundamentals (power flow, SCADA, contingency analysis, economic dispatch) through hands-on programming exercises. The target domain is day-to-day analysis and integration work at a power engineering firm.
+Refresh electrical engineering and power distribution fundamentals (power flow, SCADA, contingency analysis, economic dispatch) through hands-on programming exercises. The target domain is day-to-day analysis and integration work at a power engineering firm.
 
 ## Tracks
 
