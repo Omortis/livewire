@@ -6,23 +6,34 @@ import numpy as np
 rng = np.random.default_rng()
 
 # Hourly indices: 0–23
-hours = np.arange(24)
+hours = np.arange(1000)
 
-# Three buses with slight voltage variations around 1.0 pu
-bus1 = 1.0 + rng.uniform(-0.03, 0.03, 24)
-bus2 = 1.0 + rng.uniform(-0.02, 0.04, 24)
-bus3 = 1.0 + rng.uniform(-0.04, 0.02, 24)
+# Same daily sinusoid, repeating every 24 hours
+daily_cycle = np.sin((hours % 24 - 8) * np.pi / 12)
 
-plt.plot(hours, bus1, 'b-', label="Bus 1")
-plt.plot(hours, bus2, 'r--', label="Bus 2")
-plt.plot(hours, bus3, 'g:', label="Bus 3")
+# Base demand: 500 MW average, ±100 MW daily swing, plus random noise
+demand = 500 + 100 * daily_cycle + rng.normal(0, 20, 1000)
 
-plt.axhline(1.05, color='red', linestyle='--', alpha=0.5, label="+5% limit")
-plt.axhline(0.95, color='blue', linestyle='--', alpha=0.5, label="-5% limit")
+# Generation tracks demand closely (grid must balance), small random imbalance
+generation = demand + rng.normal(0, 10, 1000)
 
-plt.xlabel("Hour")
-plt.ylabel("Voltage (pu)")
-plt.title("Voltage Profile Comparison")
+# Time-of-day category for coloring
+time_of_day = np.where(
+    (hours % 24 < 6), "Night",
+    np.where((hours % 24 < 12), "Morning",
+    np.where((hours % 24 < 18), "Afternoon", "Evening"))
+)
+
+plt.plot([demand.min(), demand.max()], [demand.min(), demand.max()], 'k--', label="gen = demand")
+
+for tod, color in [("Morning", "orange"), ("Afternoon", "red"), ("Evening", "blue"), ("Night", "gray")]:
+    mask = time_of_day == tod
+    plt.scatter(demand[mask], generation[mask], c=color, label=tod, alpha=0.5, s=10)
+
+
+plt.xlabel("Power Demand (MW)")
+plt.ylabel("Power Generation (MW)")
+plt.title("Generation vs Demand")
 plt.legend()
 plt.grid(True)
 plt.show()
