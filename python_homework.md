@@ -862,8 +862,35 @@ Plot a daily load curve (24 hours) from a given array of load values. Add proper
 
 **Your Answer**:
 ```python
-# Write your code here
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng()
+
+# Hourly indices: 0–23
+hours = np.arange(24)
+
+# Base sinusoidal pattern: low at night (0–5), peak afternoon (14–18), dip evening
+# np.sin gives -1 to 1; we shift/scale to match load range
+base = 200 + 80 * np.sin((hours - 8) * np.pi / 12)  # shift peak to ~14:00
+
+# Add random noise ±20 MW
+noise = rng.uniform(-20, 20, 24)
+load_data = base + noise
+
+# Ensure no negative values
+load_data = np.maximum(load_data, 50)
+
+plt.plot(hours, load_data, label="load_data")
+plt.plot(hours, base, linestyle='--', alpha=0.7, label="ideal pattern")
+plt.ylabel("Load (MW)")
+plt.xlabel("Hour")
+plt.title("Daily Load Profile")
+plt.grid(True)
+plt.legend()
+plt.show()
 ```
+![Exercise 3.1](./mplot_img/ex3_1.png)
 
 ---
 
@@ -874,8 +901,34 @@ Create a plot showing voltage profiles for 3 different buses over 24 hours. Use 
 
 **Your Answer**:
 ```python
-# Write your code here
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng()
+
+# Hourly indices: 0–23
+hours = np.arange(24)
+
+# Three buses with slight voltage variations around 1.0 pu
+bus1 = 1.0 + rng.uniform(-0.03, 0.03, 24)
+bus2 = 1.0 + rng.uniform(-0.02, 0.04, 24)
+bus3 = 1.0 + rng.uniform(-0.04, 0.02, 24)
+
+plt.plot(hours, bus1, 'b-', label="Bus 1")
+plt.plot(hours, bus2, 'r--', label="Bus 2")
+plt.plot(hours, bus3, 'g:', label="Bus 3")
+
+plt.axhline(1.05, color='red', linestyle='--', alpha=0.5, label="+5% limit")
+plt.axhline(0.95, color='blue', linestyle='--', alpha=0.5, label="-5% limit")
+
+plt.xlabel("Hour")
+plt.ylabel("Voltage (pu)")
+plt.title("Voltage Profile Comparison")
+plt.legend()
+plt.grid(True)
+plt.show()
 ```
+![Exercise 3.2](./mplot_img/ex3_2.png)
 
 ---
 
@@ -886,8 +939,45 @@ Create a scatter plot of generation (MW) vs demand (MW) for 1000 hourly points. 
 
 **Your Answer**:
 ```python
-# Write your code here
+import matplotlib.pyplot as plt
+import numpy as np
+
+rng = np.random.default_rng()
+
+# Hourly indices: 0–23
+hours = np.arange(1000)
+
+# Same daily sinusoid, repeating every 24 hours
+daily_cycle = np.sin((hours % 24 - 8) * np.pi / 12)
+
+# Base demand: 500 MW average, ±100 MW daily swing, plus random noise
+demand = 500 + 100 * daily_cycle + rng.normal(0, 20, 1000)
+
+# Generation tracks demand closely (grid must balance), small random imbalance
+generation = demand + rng.normal(0, 10, 1000)
+
+# Time-of-day category for coloring
+time_of_day = np.where(
+    (hours % 24 < 6), "Night",
+    np.where((hours % 24 < 12), "Morning",
+    np.where((hours % 24 < 18), "Afternoon", "Evening"))
+)
+
+plt.plot([demand.min(), demand.max()], [demand.min(), demand.max()], 'k--', label="gen = demand")
+
+for tod, color in [("Morning", "orange"), ("Afternoon", "red"), ("Evening", "blue"), ("Night", "gray")]:
+    mask = time_of_day == tod
+    plt.scatter(demand[mask], generation[mask], c=color, label=tod, alpha=0.5, s=10)
+
+
+plt.xlabel("Power Demand (MW)")
+plt.ylabel("Power Generation (MW)")
+plt.title("Generation vs Demand")
+plt.legend()
+plt.grid(True)
+plt.show()
 ```
+![Exercise 3.3](./mplot_img/ex3_3.png)
 
 ---
 
@@ -898,8 +988,25 @@ Create a horizontal bar chart showing total installed capacity by fuel type. Add
 
 **Your Answer**:
 ```python
-# Write your code here
+import matplotlib.pyplot as plt
+import numpy as np
+
+fuel_types = ["Nuclear", "Coal", "Gas", "Wind", "Solar"]
+capacity = [1000, 500, 400, 200, 100]
+
+fig, ax = plt.subplots()
+
+ax.barh(fuel_types, capacity, align='center')
+ax.yaxis.set_inverted(True)  # arrange data from top to bottom
+ax.set_xlabel('Capacity (MW)')
+ax.set_title('Capacity By Fuel Type')
+
+for i, cap in enumerate(capacity):
+    ax.text(cap + 20, i, f"{cap} MW", va='center', ha='left')
+
+plt.show()
 ```
+![Exercise 3.4](./mplot_img/ex3_4.png)
 
 ---
 
@@ -910,9 +1017,44 @@ Create a heatmap showing power flow on 5 lines over 24 hours. Use a colorbar to 
 
 **Your Answer**:
 ```python
-# Write your code here
-```
+import matplotlib.pyplot as plt
+import numpy as np
 
+rng = np.random.default_rng()
+
+# Hourly indices: 0–23
+hours = np.arange(24)
+
+# Base sinusoidal pattern: low at night (0–5), peak afternoon (14–18), dip evening
+# np.sin gives -1 to 1; we shift/scale to match load range
+base = 200 + 80 * np.sin((hours - 8) * np.pi / 12)  # shift peak to ~14:00
+
+lines = ["L1", "L2", "L3", "L4", "L5"]
+power_flow = np.empty((5, 24))
+for i in range(5):
+    # Add random noise ±20 MVA
+    noise = rng.uniform(-20, 20, 24)
+    power_flow[i, :] = base + noise
+
+fig, ax = plt.subplots()
+# Create the heatmap - colors listed here:
+# https://matplotlib.org/stable/users/explain/colors/colormaps.html
+im = ax.imshow(power_flow, cmap='viridis', aspect='auto')
+
+# Add colorbar — this is the "legend" for the color scale
+cbar = fig.colorbar(im, ax=ax)
+cbar.set_label('Power Flow (MW)')
+
+# Show all ticks and label them with the respective list entries
+ax.set_xticks(range(24), labels=hours)
+ax.set_yticks(range(len(lines)), labels=lines)
+ax.set_xlabel("Hour")
+ax.set_ylabel("Line")
+ax.set_title("Hourly Power Flow Over 5 Lines (MW)")
+fig.tight_layout()
+plt.show()
+```
+![Exercise 3.5](./mplot_img/ex3_5.png)
 ---
 
 ### Exercise 3.6: System Status Dashboard
@@ -922,9 +1064,78 @@ Create a single figure with multiple chart types: a line plot for total generati
 
 **Your Answer**:
 ```python
-# Write your code here
-```
+import matplotlib.pyplot as plt
+import numpy as np
 
+rng = np.random.default_rng()
+
+# Hourly indices: 0–23
+hours = np.arange(24)
+
+fig, axes = plt.subplots(2, 2)
+
+# Generate 5 generator types
+coal = rng.uniform(100, 300, 24)
+gas = rng.uniform(50, 150, 24)
+nuclear = rng.uniform(280, 300, 24)
+wind = rng.uniform(0, 200, 24)
+solar = rng.uniform(0, 100, 24)
+total_gen = coal + gas + nuclear + wind + solar
+
+axes[0, 0].plot(hours, total_gen)
+
+axes[0, 0].set_xlabel("Hour")
+axes[0, 0].set_ylabel("Load (MW)")
+axes[0, 0].set_title("Load")
+
+fuel_types = ["Nuclear", "Coal", "Gas", "Wind", "Solar"]
+capacity = [1000, 500, 400, 200, 100]
+
+axes[0, 1].barh(fuel_types, capacity, align='center')
+axes[0, 1].yaxis.set_inverted(True)  # arrange data from top to bottom
+axes[0, 1].set_xlabel('Capacity (MW)')
+axes[0, 1].set_title('Capacity By Fuel Type')
+
+scatter_hours = np.arange(1000)
+
+# Same daily sinusoid, repeating every 24 hours
+daily_cycle = np.sin((scatter_hours % 24 - 8) * np.pi / 12)
+
+# Base demand: 500 MW average, ±100 MW daily swing, plus random noise
+demand = 500 + 100 * daily_cycle + rng.normal(0, 20, 1000)
+
+# Generation tracks demand closely (grid must balance), small random imbalance
+generation = demand + rng.normal(0, 10, 1000)
+
+# Time-of-day category for coloring
+time_of_day = np.where(
+    (scatter_hours % 24 < 6), "Night",
+    np.where((scatter_hours % 24 < 12), "Morning",
+    np.where((scatter_hours % 24 < 18), "Afternoon", "Evening"))
+)
+
+price = 20 + 0.05 * demand + rng.normal(0, 5, 1000)
+# At 500 MW demand → ~$45/MWh
+# At 700 MW demand → ~$55/MWh
+
+for tod, color in [("Morning", "orange"), ("Afternoon", "red"), ("Evening", "blue"), ("Night", "gray")]:
+    mask = time_of_day == tod
+    axes[1, 0].scatter(demand[mask], price[mask], c=color, label=tod, alpha=0.5, s=10)
+
+
+axes[1, 0].set_xlabel("Demand (MW)")
+axes[1, 0].set_ylabel("Price ($/MWh)")
+axes[1, 0].set_title("Price vs Demand")
+axes[1, 0].grid(True)
+
+axes[1, 1].axis('off')
+
+fig.suptitle("System Status")
+fig.tight_layout()
+
+plt.show()
+```
+![Exercise 3.6](./mplot_img/ex3_6.png)
 ---
 
 ## 4. Object-Oriented Concepts
