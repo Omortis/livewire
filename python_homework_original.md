@@ -378,6 +378,29 @@ Create an abstract base class `PowerSystemDataSource` with an abstract method `r
 
 *Note: Power system data arrives in many formats — SCADA CSV exports, IEC 61850 JSON payloads, CIM/XML files, DNP3 binary streams. An ETL pipeline normalizes these disparate formats into a canonical schema before analytics and storage.*
 
+**Sample data files:**
+
+`scada_sample.csv`:
+```csv
+timestamp,bus_id,voltage_pu,power_mw
+2024-01-01T00:00,1,1.02,50.5
+2024-01-01T00:00,2,0.98,120.0
+2024-01-01T01:00,1,1.01,48.0
+2024-01-01T01:00,2,0.97,115.0
+```
+
+`iec61850_sample.json`:
+```json
+{
+  "measurements": [
+    {"timestamp": "2024-01-01T00:00", "busId": 1, "voltage": 1.02, "power": 50.5},
+    {"timestamp": "2024-01-01T00:00", "busId": 2, "voltage": 0.98, "power": 120.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 1, "voltage": 1.01, "power": 48.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 2, "voltage": 0.97, "power": 115.0}
+  ]
+}
+```
+
 **Your Answer**:
 ```python
 # Write your code here

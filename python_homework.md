@@ -1443,9 +1443,164 @@ Create an abstract base class `PowerSystemDataSource` with an abstract method `r
 
 *Note: Power system data arrives in many formats — SCADA CSV exports, IEC 61850 JSON payloads, CIM/XML files, DNP3 binary streams. An ETL pipeline normalizes these disparate formats into a canonical schema before analytics and storage.*
 
+**Sample data files:**
+
+`scada_sample.csv`:
+```csv
+timestamp,bus_id,voltage_pu,power_mw
+2024-01-01T00:00,1,1.02,50.5
+2024-01-01T00:00,2,0.98,120.0
+2024-01-01T01:00,1,1.01,48.0
+2024-01-01T01:00,2,0.97,115.0
+```
+
+`iec61850_sample.json`:
+```json
+{
+  "measurements": [
+    {"timestamp": "2024-01-01T00:00", "busId": 1, "voltage": 1.02, "power": 50.5},
+    {"timestamp": "2024-01-01T00:00", "busId": 2, "voltage": 0.98, "power": 120.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 1, "voltage": 1.01, "power": 48.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 2, "voltage": 0.97, "power": 115.0}
+  ]
+}
+```
+
 **Your Answer**:
 ```python
-# Write your code here
+from abc import ABC, abstractmethod
+import pandas as pd
+import os
+import errno
+from jsonschema import validate, ValidationError
+from pandas_schema import Column, Schema
+from pandas_schema.validation import DateFormatValidation, InRangeValidation, LeadingWhitespaceValidation
+import json
+
+class PowerSystemDataSource(ABC):
+    """Provides access to power system data from varying sources."""
+
+    @abstractmethod
+    def read_measurements(self) -> pd.DataFrame:
+        """Read raw measurements and return a normalized DataFrame."""
+        pass
+
+
+class ScadaCsvAdapter(PowerSystemDataSource):
+    """Ingest and process CSV files from SCADA systems."""
+
+    def __init__(self, file_path: str):
+        if os.path.isfile(file_path):
+            self.file_path = file_path
+        else:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_path)
+
+        self._csv_schema = Schema([
+            Column('timestamp', [
+                DateFormatValidation('%Y-%m-%dT%H:%M'),
+                LeadingWhitespaceValidation()
+            ]),
+            Column('bus_id', [InRangeValidation(1, 999)]),
+            Column('voltage_pu', [InRangeValidation(0.9, 1.1)]),
+            Column('power_mw', [InRangeValidation(-1000, 1000)])
+        ])
+
+    @property
+    def csv_schema(self) -> Schema:
+        return self._csv_schema
+
+    def read_measurements(self) -> pd.DataFrame:
+        incoming = pd.read_csv(self.file_path)
+        errors = self.csv_schema.validate(incoming)
+
+        if len(errors) != 0:
+            for error in errors:
+                print(error)
+            raise ValueError("Validation errors encountered in incoming data")
+
+        return incoming
+
+class Iec61850JsonAdapter(PowerSystemDataSource):
+    """Ingest and process JSON data from IEC 61850 sources."""
+
+    def __init__(self, file_path: str):
+        if os.path.isfile(file_path):
+            self.file_path = file_path
+        else:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_path)
+
+        self._json_schema = {
+            "type": "object",
+            "properties": {
+                "measurements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "timestamp": {"type": "string", "format": "date-time"},
+                            "busId": {"type": "integer"},
+                            "voltage": {"type": "number"},
+                            "power": {"type": "number"}
+                        },
+                        "required": ["timestamp", "busId", "voltage", "power"]
+                    }
+                }
+            },
+            "required": ["measurements"]
+        }
+
+    @property
+    def json_schema(self) -> object:
+        return self._json_schema
+
+    def read_measurements(self) -> pd.DataFrame:
+        with open(self.file_path, "r") as file:
+            incoming = json.load(file)
+
+            try:
+                validate(instance=incoming, schema=self.json_schema)
+            except ValidationError as e:
+                print(e)
+                raise ValueError("Validation errors encountered in incoming data")
+            
+            df = pd.DataFrame(incoming["measurements"])
+            df.rename(columns={
+                "busId": "bus_id", 
+                "voltage": "voltage_pu", 
+                "power": "power_mw"
+            }, inplace=True)
+            return df
+
+def ingest_data(source: PowerSystemDataSource) -> pd.DataFrame:
+    df: pd.DataFrame = source.read_measurements()
+
+    return df
+
+if __name__ == "__main__":
+
+    scada = ScadaCsvAdapter("./scada_incoming.csv")
+    df_scada = scada.read_measurements()
+    print("Incoming SCADA data converted to normalized dataframe:")
+    print(df_scada.to_string())
+
+    iec61850 = Iec61850JsonAdapter("./iec61850_incoming.json")
+    df_iec61850 = iec61850.read_measurements()
+    print("Incoming Iec61850 data converted to normalized dataframe:")
+    print(df_iec61850.to_string())
+
+# Output:
+# Incoming SCADA data converted to normalized dataframe:
+#           timestamp  bus_id  voltage_pu  power_mw
+# 0  2024-01-01T00:00       1        1.02      50.5
+# 1  2024-01-01T00:00       2        0.98     120.0
+# 2  2024-01-01T01:00       1        1.01      48.0
+# 3  2024-01-01T01:00       2        0.97     115.0
+# Incoming Iec61850 data converted to normalized dataframe:
+#           timestamp  bus_id  voltage_pu  power_mw
+# 0  2024-01-01T00:00       1        1.02      50.5
+# 1  2024-01-01T00:00       2        0.98     120.0
+# 2  2024-01-01T01:00       1        1.01      48.0
+# 3  2024-01-01T01:00       2        0.97     115.0
 ```
 
 ---
