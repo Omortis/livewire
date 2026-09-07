@@ -347,7 +347,10 @@ Create a `Bus` class with attributes `bus_id`, `voltage`, `angle`, and `load_mw`
 ---
 
 ### Exercise 4.2: Generator Inheritance
-Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`. `ThermalGenerator` should have a `heat_rate` attribute and a method `get_fuel_cost()`. `RenewableGenerator` should have a `capacity_factor` attribute and override `get_output()` to consider capacity factor.
+Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`.
+
+- `ThermalGenerator` should have a `heat_rate` attribute (MMBtu/MWh) and a method `get_fuel_cost(fuel_price_per_mmbtu: float)` that returns the fuel cost in dollars per hour: `get_output() * heat_rate * fuel_price_per_mmbtu`.
+- `RenewableGenerator` should have a `capacity_factor` attribute (0.0 to 1.0) and override `get_output()` to return `p_max * capacity_factor`.
 
 *Note: Thermal generators (coal, gas, nuclear) convert fuel to electricity. Renewables (wind, solar) depend on weather. Capacity factor is the actual output divided by maximum possible output.*
 
