@@ -75,7 +75,41 @@ Sample `equipment.json`:
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+// Equipment.java
+package com.livewire;
+
+public class Equipment {
+    public String id;
+    public String type;
+    public double voltage_kv;
+    public String status;
+}
+
+// App.java
+package com.livewire;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+
+public class App {
+    public static void main(String[] args) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        Equipment[] equipment = mapper.readValue(
+            new File("src/main/resources/equipment.json"), 
+            Equipment[].class
+        );
+        
+        for (Equipment e : equipment) {
+            System.out.println(e.id + " " + e.voltage_kv);
+        }
+    }
+}
+// Output:
+// T1 138.0
+// B1 13.8
+// [INFO] BUILD SUCCESS
+// [INFO] Total time: 0.316 s
+
 ```
 
 ---
