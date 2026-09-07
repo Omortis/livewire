@@ -1147,19 +1147,227 @@ Create a `Bus` class with attributes `bus_id`, `voltage`, `angle`, and `load_mw`
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+class Bus:
+    """Represents an electrical power system bus bar."""
+
+    def __init__(
+        self,
+        bus_id: int | str,
+        voltage: float,
+        angle: float,
+        load_mw: float,
+    ):
+        """Initialize a new Bus instance.
+
+        :param bus_id: Unique identifier for the bus (e.g., integer index or name)
+        :param voltage: Voltage magnitude (typically in per-unit or kV)
+        :param angle: Voltage phase angle (typically in degrees or radians)
+        :param load_mw: Real power load connected to the bus in megawatts (MW)
+        """
+        self.bus_id = bus_id
+        self.voltage = voltage
+        self.angle = angle
+        self.load_mw = load_mw
+
+    def update_voltage(self, new_voltage: float) -> None:
+        """Update the voltage magnitude of the bus.
+
+        :param new_voltage: The updated voltage value
+        """
+        self.voltage = new_voltage
+
+    def update_angle(self, new_angle: float) -> None:
+        """Update the voltage phase angle of the bus.
+
+        :param new_angle: The updated phase angle value
+        """
+        self.angle = new_angle
+
+    def get_complex_voltage(self) -> complex:
+        """Return the complex voltage phasor as a complex number."""
+        return self.voltage * np.exp(1j * self.angle)
+
+    def __repr__(self) -> str:
+        """Return a string representation for debugging."""
+        return (
+            f"Bus(bus_id={self.bus_id!r}, voltage={self.voltage}, "
+            f"angle={self.angle}, load_mw={self.load_mw})"
+        )
+
+
+# Example usage:
+if __name__ == "__main__":
+    # Create a bus object
+    bus1 = Bus(bus_id=101, voltage=1.02, angle=-0.5, load_mw=50.0)
+    print("Initial State: ", bus1)
+    complex_voltage: complex = bus1.get_complex_voltage()
+    print("Complex voltage (rect): ", complex_voltage)
+    print(f"Complex voltage (polar): {bus1.voltage}exp({bus1.angle})")
+
+    # Update voltage and angle
+    bus1.update_voltage(1.05)
+    bus1.update_angle(-0.8)
+
+    print("Updated State:", bus1)
+    complex_voltage: complex = bus1.get_complex_voltage()
+    print("Complex voltage (rect): ", complex_voltage)
+    print(f"Complex voltage (polar): {bus1.voltage}exp({bus1.angle})")
+
+# Output:
+# 
+# Initial State:  Bus(bus_id=101, voltage=1.02, angle=-0.5, load_mw=50.0)
+# Complex voltage (rect):  (0.8951342131281802-0.48901404937628706j)
+# Complex voltage (polar): 1.02exp(-0.5)
+# Updated State: Bus(bus_id=101, voltage=1.05, angle=-0.8, load_mw=50.0)
+# Complex voltage (rect):  (0.7315420448145237-0.753223895444499j)
+# Complex voltage (polar): 1.05exp(-0.8)
 ```
 
 ---
 
 ### Exercise 4.2: Generator Inheritance
-Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`. `ThermalGenerator` should have a `heat_rate` attribute and a method `get_fuel_cost()`. `RenewableGenerator` should have a `capacity_factor` attribute and override `get_output()` to consider capacity factor.
+Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`.
+
+- `ThermalGenerator` should have a `heat_rate` attribute (MMBtu/MWh) and a method `get_fuel_cost(fuel_price_per_mmbtu: float)` that returns the fuel cost in dollars per hour: `get_output() * heat_rate * fuel_price_per_mmbtu`.
+- `RenewableGenerator` should have a `capacity_factor` attribute (0.0 to 1.0) and override `get_output()` to return `p_max * capacity_factor`.
 
 *Note: Thermal generators (coal, gas, nuclear) convert fuel to electricity. Renewables (wind, solar) depend on weather. Capacity factor is the actual output divided by maximum possible output.*
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+class Generator:
+    """Represents an electrical power generation system."""
+
+    def __init__(
+        self,
+        bus_id: int | str,
+        gen_id: int | str,
+        p_max: float,
+        p_min: float
+    ):
+        """Initialize a new Generator instance.
+
+        :param bus_id: Unique identifier for the bus (e.g., integer index or name)
+        :param gen_id: Unique identifier for a specific generator
+        :param p_max: Maximum power the generator can provide
+        :param p_min: Minimum power the generator can provide
+        """
+        self.bus_id = bus_id
+        self.gen_id = gen_id
+        self.p_max = p_max
+        self.p_min = p_min
+
+    def get_output(self) -> float:
+        """Return the output for this generator. Not implemented in base class."""
+        raise NotImplementedError(
+             "Subclasses must implement this method"
+         )
+    def __repr__(self) -> str:
+        """Return a string representation of the Generator for debugging."""
+        return (
+            f"Generator(bus_id={self.bus_id!r}, gen_id={self.gen_id}, "
+            f"p_max={self.p_max}, p_min={self.p_min})"
+        )
+
+class ThermalGenerator(Generator):
+    """Represents a Thermal Generator.
+    
+    :param heat_rate: Fuel consumed in MMBtu to produce one MWh of electricity (MMBtu/MWh).
+    """
+
+    def __init__(
+        self,
+        bus_id: int | str,
+        gen_id: int | str,
+        p_max: float,
+        p_min: float,
+        heat_rate: float
+    ):
+        super().__init__(bus_id, gen_id, p_max, p_min)
+        self.heat_rate = heat_rate
+
+    def get_output(self) -> float:
+        return self.p_max
+
+    def get_fuel_cost(self, fuel_price_per_mmbtu: float) -> float:
+        return self.get_output() * self.heat_rate * fuel_price_per_mmbtu
+
+    def __repr__(self) -> str:
+        """Return a string representation of the ThermalGenerator for debugging."""
+        return (
+            f"ThermalGenerator(bus_id={self.bus_id!r}, gen_id={self.gen_id}, "
+            f"p_max={self.p_max}, p_min={self.p_min}, heat_rate={self.heat_rate})"
+        )
+    
+class RenewableGenerator(Generator):
+    """Represents a Renewable Generator (solar, wind, etc).
+    
+    :param capacity_factor: Long-term average ratio of actual 
+    energy output to maximum possible output (0.0 to 1.0), 
+    accounting for weather and downtime.
+    """
+
+    def __init__(
+        self,
+        bus_id: int | str,
+        gen_id: int | str,
+        p_max: float,
+        p_min: float,
+        capacity_factor: float
+    ):
+        super().__init__(bus_id, gen_id, p_max, p_min)
+        if capacity_factor < 0.0 or capacity_factor > 1.0:
+            raise ValueError("0.0 <= capacity_factor <= 1.0: value out of range:", capacity_factor)
+        self.capacity_factor = capacity_factor
+
+
+    def get_output(self) -> float:
+        return self.p_max * self.capacity_factor
+
+    def __repr__(self) -> str:
+        """Return a string representation of the RenewableGenerator for debugging."""
+        return (
+            f"RenewableGenerator(bus_id={self.bus_id!r}, gen_id={self.gen_id}, "
+            f"p_max={self.p_max}, p_min={self.p_min}, capacity_factor={self.capacity_factor})"
+        )
+    
+# Example usage:
+if __name__ == "__main__":
+    gen1 = Generator(bus_id=101, gen_id="gen1", p_max=1.0, p_min=0.0)
+
+    try:
+        output = gen1.get_output()
+    except NotImplementedError:
+        print("Correctly raised NotImplementedError")
+
+    thermal = ThermalGenerator("GEN_1", 1, 500, 100, heat_rate=7.2)
+    print(f"{thermal.get_output()} MW")
+    print(f"${thermal.get_fuel_cost(3.5):,.0f}/hour")
+
+    try:
+        renewable = RenewableGenerator("GEN_2", 2, 200, 0, capacity_factor=1.35)
+    except ValueError:
+        print("Correctly raised ValueError (capacity_factor > 1.0)")
+
+    try:
+        renewable = RenewableGenerator("GEN_2", 2, 200, 0, capacity_factor=-0.35)
+    except ValueError:
+        print("Correctly raised ValueError (capacity_factor < 0.0)")
+
+    renewable = RenewableGenerator("GEN_2", 2, 200, 0, capacity_factor=0.35)
+    print(f"{renewable.get_output()} MW")
+    
+# Output:
+# Correctly raised NotImplementedError
+# 500 MW
+# $12,600/hour
+# Correctly raised ValueError (capacity_factor > 1.0)
+# Correctly raised ValueError (capacity_factor < 0.0)
+# 70.0 MW
 ```
 
 ---
@@ -1171,19 +1379,228 @@ Create a `Transformer` class that encapsulates its tap ratio and impedance. The 
 
 **Your Answer**:
 ```python
-# Write your code here
+import numpy as np
+
+class Transformer:
+    """Represents an electrical voltage transformer."""
+
+    def __init__(
+        self,
+        id: str,
+        impedance: complex,
+        tap_ratio: float = 1.0
+    ):
+        """Initialize a new Transformer instance.
+
+        :param tap_ratio: The tap ratio changes the voltage transformation ratio.
+        :param impedance: The input impedance for the transformer.
+        """
+
+        self._id = id
+        self._tap_ratio = tap_ratio
+        self._impedance = impedance
+
+    @property
+    def impedance(self) -> complex:
+        """Read-only transformer impedance."""
+        return self._impedance
+
+    @property
+    def tap_ratio(self) -> float:
+        return self._tap_ratio
+
+    def set_tap_ratio(self, value: float):
+        if not (0.9 <= value <= 1.1):
+            raise ValueError(f"0.9 <= tap ratio <= 1.1, got {value}")
+        self._tap_ratio = value
+
+# Example usage:
+if __name__ == "__main__":
+
+    transformer = Transformer(id="OptimusPrime", impedance=0.01+0.08j, tap_ratio=1.0)
+
+    try:
+        transformer.impedance = 0.02 + 0.1j
+    except AttributeError:
+        print("Correctly raised AttributeError (impedance is read-only)")
+
+    try:
+        transformer.tap_ratio = 0.95
+    except AttributeError:
+        print("Correctly raised AttributeError (tap_ratio is read-only)")
+
+    transformer.set_tap_ratio(0.95)
+
+# Output:
+Correctly raised AttributeError (impedance is read-only)
+Correctly raised AttributeError (tap_ratio is read-only)
 ```
 
 ---
 
-### Exercise 4.4: Polymorphism - Solver Interface
-Create an abstract base class `PowerFlowSolver` with an abstract method `solve()`. Implement two concrete classes: `NewtonRaphsonSolver` and `GaussSeidelSolver`. Each should implement `solve()` differently. Write a function `run_solver(solver: PowerFlowSolver, system_data)` that accepts any solver type and returns the solution.
+### Exercise 4.4: Polymorphism - Data Source Adapter Interface
+Create an abstract base class `PowerSystemDataSource` with an abstract method `read_measurements()`. Implement two concrete classes: `ScadaCsvAdapter` (reads CSV with columns `timestamp,bus_id,voltage_pu,power_mw`) and `Iec61850JsonAdapter` (reads JSON with nested structure). Write a function `ingest_data(source: PowerSystemDataSource)` that accepts any adapter type and returns a normalized `pandas.DataFrame` with columns `['timestamp', 'bus_id', 'voltage_pu', 'power_mw']`.
 
-*Note: Newton-Raphson is the industry standard for load flow (fast, quadratic convergence). Gauss-Seidel is simpler but slower. Different utilities use different solvers.*
+*Note: Power system data arrives in many formats — SCADA CSV exports, IEC 61850 JSON payloads, CIM/XML files, DNP3 binary streams. An ETL pipeline normalizes these disparate formats into a canonical schema before analytics and storage.*
+
+**Sample data files:**
+
+`scada_sample.csv`:
+```csv
+timestamp,bus_id,voltage_pu,power_mw
+2024-01-01T00:00,1,1.02,50.5
+2024-01-01T00:00,2,0.98,120.0
+2024-01-01T01:00,1,1.01,48.0
+2024-01-01T01:00,2,0.97,115.0
+```
+
+`iec61850_sample.json`:
+```json
+{
+  "measurements": [
+    {"timestamp": "2024-01-01T00:00", "busId": 1, "voltage": 1.02, "power": 50.5},
+    {"timestamp": "2024-01-01T00:00", "busId": 2, "voltage": 0.98, "power": 120.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 1, "voltage": 1.01, "power": 48.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 2, "voltage": 0.97, "power": 115.0}
+  ]
+}
+```
 
 **Your Answer**:
 ```python
-# Write your code here
+from abc import ABC, abstractmethod
+import pandas as pd
+import os
+import errno
+from jsonschema import validate, ValidationError
+from pandas_schema import Column, Schema
+from pandas_schema.validation import DateFormatValidation, InRangeValidation, LeadingWhitespaceValidation
+import json
+
+class PowerSystemDataSource(ABC):
+    """Provides access to power system data from varying sources."""
+
+    @abstractmethod
+    def read_measurements(self) -> pd.DataFrame:
+        """Read raw measurements and return a normalized DataFrame."""
+        pass
+
+
+class ScadaCsvAdapter(PowerSystemDataSource):
+    """Ingest and process CSV files from SCADA systems."""
+
+    def __init__(self, file_path: str):
+        if os.path.isfile(file_path):
+            self.file_path = file_path
+        else:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_path)
+
+        self._csv_schema = Schema([
+            Column('timestamp', [
+                DateFormatValidation('%Y-%m-%dT%H:%M'),
+                LeadingWhitespaceValidation()
+            ]),
+            Column('bus_id', [InRangeValidation(1, 999)]),
+            Column('voltage_pu', [InRangeValidation(0.9, 1.1)]),
+            Column('power_mw', [InRangeValidation(-1000, 1000)])
+        ])
+
+    @property
+    def csv_schema(self) -> Schema:
+        return self._csv_schema
+
+    def read_measurements(self) -> pd.DataFrame:
+        incoming = pd.read_csv(self.file_path)
+        errors = self.csv_schema.validate(incoming)
+
+        if len(errors) != 0:
+            for error in errors:
+                print(error)
+            raise ValueError("Validation errors encountered in incoming data")
+
+        return incoming
+
+class Iec61850JsonAdapter(PowerSystemDataSource):
+    """Ingest and process JSON data from IEC 61850 sources."""
+
+    def __init__(self, file_path: str):
+        if os.path.isfile(file_path):
+            self.file_path = file_path
+        else:
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), file_path)
+
+        self._json_schema = {
+            "type": "object",
+            "properties": {
+                "measurements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "timestamp": {"type": "string", "format": "date-time"},
+                            "busId": {"type": "integer"},
+                            "voltage": {"type": "number"},
+                            "power": {"type": "number"}
+                        },
+                        "required": ["timestamp", "busId", "voltage", "power"]
+                    }
+                }
+            },
+            "required": ["measurements"]
+        }
+
+    @property
+    def json_schema(self) -> object:
+        return self._json_schema
+
+    def read_measurements(self) -> pd.DataFrame:
+        with open(self.file_path, "r") as file:
+            incoming = json.load(file)
+
+            try:
+                validate(instance=incoming, schema=self.json_schema)
+            except ValidationError as e:
+                print(e)
+                raise ValueError("Validation errors encountered in incoming data")
+            
+            df = pd.DataFrame(incoming["measurements"])
+            df.rename(columns={
+                "busId": "bus_id", 
+                "voltage": "voltage_pu", 
+                "power": "power_mw"
+            }, inplace=True)
+            return df
+
+def ingest_data(source: PowerSystemDataSource) -> pd.DataFrame:
+    df: pd.DataFrame = source.read_measurements()
+
+    return df
+
+if __name__ == "__main__":
+
+    scada = ScadaCsvAdapter("./scada_incoming.csv")
+    df_scada = scada.read_measurements()
+    print("Incoming SCADA data converted to normalized dataframe:")
+    print(df_scada.to_string())
+
+    iec61850 = Iec61850JsonAdapter("./iec61850_incoming.json")
+    df_iec61850 = iec61850.read_measurements()
+    print("Incoming Iec61850 data converted to normalized dataframe:")
+    print(df_iec61850.to_string())
+
+# Output:
+# Incoming SCADA data converted to normalized dataframe:
+#           timestamp  bus_id  voltage_pu  power_mw
+# 0  2024-01-01T00:00       1        1.02      50.5
+# 1  2024-01-01T00:00       2        0.98     120.0
+# 2  2024-01-01T01:00       1        1.01      48.0
+# 3  2024-01-01T01:00       2        0.97     115.0
+# Incoming Iec61850 data converted to normalized dataframe:
+#           timestamp  bus_id  voltage_pu  power_mw
+# 0  2024-01-01T00:00       1        1.02      50.5
+# 1  2024-01-01T00:00       2        0.98     120.0
+# 2  2024-01-01T01:00       1        1.01      48.0
+# 3  2024-01-01T01:00       2        0.97     115.0
 ```
 
 ---
@@ -1195,7 +1612,121 @@ Create a `PowerSystem` class that contains lists of `Bus`, `Generator`, and `Lin
 
 **Your Answer**:
 ```python
-# Write your code here
+from ex4_1 import Bus
+from ex4_2 import ThermalGenerator
+
+class Line:
+    def __init__(
+            self, 
+            line_id: str | int, 
+            from_bus: str | int, 
+            to_bus: str | int, 
+            flow_mw: float, 
+            rating_mva: float
+        ):
+        self.line_id = line_id
+        self.from_bus = from_bus    # Bus ID at one end
+        self.to_bus = to_bus        # Bus ID at the other end
+        self.flow_mw = flow_mw      # Current power flow
+        self.rating_mva = rating_mva  # Thermal limit
+
+    def is_overloaded(self) -> bool:
+        """Check if line flow exceeds its rating."""
+        return abs(self.flow_mw) > self.rating_mva
+
+    def __repr__(self) -> str:
+        return f"Line({self.line_id!r}, {self.from_bus}→{self.to_bus}, flow={self.flow_mw} MW)"
+    
+class PowerSystem:
+    def __init__(self):
+        self.buses = []
+        self.generators = []
+        self.lines = []
+
+    # Busses
+    # -----------------------------------------------------------------
+    def add_bus(self, bus: Bus):
+        self.buses.append(bus)
+    
+    def remove_bus(self, bus_id: str | int):
+        self.buses = [b for b in self.buses if b.bus_id != bus_id]
+    
+    def total_load(self) -> float:
+        return sum(bus.load_mw for bus in self.buses)
+
+    # Generators
+    # -----------------------------------------------------------------
+    def add_generator(self, generator: ThermalGenerator):
+        self.generators.append(generator)
+
+    def remove_generator(self, gen_id: int | str):
+        self.generators = [g for g in self.generators if g.gen_id != gen_id ]
+
+    def total_generation(self) -> float:
+        return sum(gen.get_output() for gen in self.generators)
+
+    # Lines
+    # -----------------------------------------------------------------
+    def add_line(self, line: Line):
+        self.lines.append(line)
+
+    def remove_line(self, line_id: str | int):
+        self.lines = [l for l in self.lines if l.line_id != line_id]
+
+if __name__ == "__main__":
+
+    # Create bus objects
+    bus1 = Bus(bus_id=101, voltage=1.02, angle=-0.5, load_mw=50.0)
+    bus2 = Bus(bus_id=102, voltage=1.04, angle=-0.4, load_mw=60.0)
+    bus3 = Bus(bus_id=103, voltage=1.06, angle=-0.3, load_mw=70.0)
+    bus4 = Bus(bus_id=104, voltage=1.08, angle=-0.2, load_mw=80.0)
+
+    # Create generator objects
+    gen1 = ThermalGenerator(bus_id=101, gen_id="gen1", p_max=1.0, p_min=0.0, heat_rate=7.2)
+    gen2 = ThermalGenerator(bus_id=102, gen_id="gen2", p_max=1.1, p_min=0.1, heat_rate=7.3)
+    gen3 = ThermalGenerator(bus_id=103, gen_id="gen3", p_max=1.2, p_min=0.2, heat_rate=7.4)
+    gen4 = ThermalGenerator(bus_id=104, gen_id="gen4", p_max=1.3, p_min=0.3, heat_rate=7.5)
+
+    # Create line objects
+    line1 = Line(line_id=101, from_bus=101, to_bus=102, flow_mw=50.0, rating_mva=100)
+    line2 = Line(line_id=102, from_bus=102, to_bus=103, flow_mw=55.0, rating_mva=90)
+    line3 = Line(line_id=103, from_bus=103, to_bus=104, flow_mw=60.0, rating_mva=80)
+    line4 = Line(line_id=104, from_bus=104, to_bus=101, flow_mw=65.0, rating_mva=70)
+
+    power_system = PowerSystem()
+
+    power_system.add_bus(bus1)
+    power_system.add_bus(bus2)
+    power_system.add_bus(bus3)
+    power_system.add_bus(bus4)
+
+    power_system.add_generator(gen1)
+    power_system.add_generator(gen2)
+    power_system.add_generator(gen3)
+    power_system.add_generator(gen4)
+
+    power_system.add_line(line1)
+    power_system.add_line(line2)
+    power_system.add_line(line3)
+    power_system.add_line(line4)
+
+    print(f"Total load: {power_system.total_load()} MW")
+    print("Removing bus1.")
+    power_system.remove_bus(101)
+    print(f"Total load: {power_system.total_load()} MW")
+
+    print(f"Total generation: {power_system.total_generation()} MW")
+    print("Removing gen1")
+    power_system.remove_generator("gen1")
+    print(f"Total generation: {power_system.total_generation()} MW")
+
+# Output:
+# Total load: 260.0 MW
+# Removing bus1.
+# Total load: 210.0 MW
+# Total generation: 4.6 MW
+# Removing gen1
+# Total generation: 3.6 MW
 ```
 
 ---
@@ -1207,7 +1738,83 @@ Implement the Observer pattern for a SCADA monitoring system. Create a `SCADA` s
 
 **Your Answer**:
 ```python
-# Write your code here
+from abc import ABC, abstractmethod
+
+class Observer(ABC):
+    @abstractmethod
+    def update(self, measurement_name: str, value: float) -> None:
+        """Called by the SCADA subject when a measurement changes."""
+        pass
+
+class SCADA:
+    """Holds system measurements and notifies observers when values change."""
+    
+    def __init__(self):
+        self._measurements = {}
+        self._observers = []
+    
+    def register_observer(self, observer: Observer) -> None:
+        self._observers.append(observer)
+    
+    def unregister_observer(self, observer: Observer) -> None:
+        self._observers.remove(observer)
+    
+    def update_measurement(self, name: str, value: float) -> None:
+        self._measurements[name] = value
+        self._notify_observers(name, value)
+    
+    def _notify_observers(self, name: str, value: float) -> None:
+        for observer in self._observers:
+            observer.update(name, value)
+
+class VoltageAlarm(Observer):
+    """Triggers when voltage is outside acceptable range."""
+    
+    def __init__(self, bus_id: str | int, min_v: float = 0.95, max_v: float = 1.05):
+        self.bus_id = bus_id
+        self.min_v = min_v
+        self.max_v = max_v
+    
+    def update(self, measurement_name: str, value: float) -> None:
+        # Only react to measurements for this specific bus
+        if measurement_name == f"bus_{self.bus_id}_voltage":
+            if value < self.min_v or value > self.max_v:
+                print(f"ALARM: Bus {self.bus_id} voltage {value:.3f} pu out of range "
+                      f"({self.min_v}-{self.max_v})")
+
+class LineFlowAlarm(Observer):
+    """Triggers when line flow exceeds thermal rating."""
+    
+    def __init__(self, line_id: str | int, rating_mva: float, threshold: float = 0.9):
+        self.line_id = line_id
+        self.rating_mva = rating_mva
+        self.threshold = threshold
+    
+    def update(self, measurement_name: str, value: float) -> None:
+        # Only react to measurements for this specific line
+        if measurement_name == f"line_{self.line_id}_flow":
+            limit = self.rating_mva * self.threshold
+            if abs(value) > limit:
+                print(f"ALARM: Line {self.line_id} flow {value:.1f} MVA exceeds "
+                      f"{self.threshold*100:.0f}% of rating ({limit:.1f} MVA)")
+
+# Example usage:
+if __name__ == "__main__":
+    scada = SCADA()
+    
+    # Register alarms
+    scada.register_observer(VoltageAlarm(101))
+    scada.register_observer(LineFlowAlarm(201, rating_mva=100.0))
+    
+    # Simulate measurements
+    scada.update_measurement("bus_101_voltage", 1.02)   # OK
+    scada.update_measurement("bus_101_voltage", 1.08)   # Triggers alarm
+    scada.update_measurement("line_201_flow", 85.0)     # OK (below 90%)
+    scada.update_measurement("line_201_flow", 95.0)     # Triggers alarm
+
+# Output
+# ALARM: Bus 101 voltage 1.080 pu out of range (0.95-1.05)
+# ALARM: Line 201 flow 95.0 MVA exceeds 90% of rating (90.0 MVA)
 ```
 
 ---

@@ -347,7 +347,10 @@ Create a `Bus` class with attributes `bus_id`, `voltage`, `angle`, and `load_mw`
 ---
 
 ### Exercise 4.2: Generator Inheritance
-Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`. `ThermalGenerator` should have a `heat_rate` attribute and a method `get_fuel_cost()`. `RenewableGenerator` should have a `capacity_factor` attribute and override `get_output()` to consider capacity factor.
+Create a base `Generator` class with attributes `gen_id`, `bus_id`, `p_max`, `p_min`, and a method `get_output()`. Create two subclasses: `ThermalGenerator` and `RenewableGenerator`.
+
+- `ThermalGenerator` should have a `heat_rate` attribute (MMBtu/MWh) and a method `get_fuel_cost(fuel_price_per_mmbtu: float)` that returns the fuel cost in dollars per hour: `get_output() * heat_rate * fuel_price_per_mmbtu`.
+- `RenewableGenerator` should have a `capacity_factor` attribute (0.0 to 1.0) and override `get_output()` to return `p_max * capacity_factor`.
 
 *Note: Thermal generators (coal, gas, nuclear) convert fuel to electricity. Renewables (wind, solar) depend on weather. Capacity factor is the actual output divided by maximum possible output.*
 
@@ -370,10 +373,33 @@ Create a `Transformer` class that encapsulates its tap ratio and impedance. The 
 
 ---
 
-### Exercise 4.4: Polymorphism - Solver Interface
-Create an abstract base class `PowerFlowSolver` with an abstract method `solve()`. Implement two concrete classes: `NewtonRaphsonSolver` and `GaussSeidelSolver`. Each should implement `solve()` differently. Write a function `run_solver(solver: PowerFlowSolver, system_data)` that accepts any solver type and returns the solution.
+### Exercise 4.4: Polymorphism - Data Source Adapter Interface
+Create an abstract base class `PowerSystemDataSource` with an abstract method `read_measurements()`. Implement two concrete classes: `ScadaCsvAdapter` (reads CSV with columns `timestamp,bus_id,voltage_pu,power_mw`) and `Iec61850JsonAdapter` (reads JSON with nested structure). Write a function `ingest_data(source: PowerSystemDataSource)` that accepts any adapter type and returns a normalized `pandas.DataFrame` with columns `['timestamp', 'bus_id', 'voltage_pu', 'power_mw']`.
 
-*Note: Newton-Raphson is the industry standard for load flow (fast, quadratic convergence). Gauss-Seidel is simpler but slower. Different utilities use different solvers.*
+*Note: Power system data arrives in many formats — SCADA CSV exports, IEC 61850 JSON payloads, CIM/XML files, DNP3 binary streams. An ETL pipeline normalizes these disparate formats into a canonical schema before analytics and storage.*
+
+**Sample data files:**
+
+`scada_sample.csv`:
+```csv
+timestamp,bus_id,voltage_pu,power_mw
+2024-01-01T00:00,1,1.02,50.5
+2024-01-01T00:00,2,0.98,120.0
+2024-01-01T01:00,1,1.01,48.0
+2024-01-01T01:00,2,0.97,115.0
+```
+
+`iec61850_sample.json`:
+```json
+{
+  "measurements": [
+    {"timestamp": "2024-01-01T00:00", "busId": 1, "voltage": 1.02, "power": 50.5},
+    {"timestamp": "2024-01-01T00:00", "busId": 2, "voltage": 0.98, "power": 120.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 1, "voltage": 1.01, "power": 48.0},
+    {"timestamp": "2024-01-01T01:00", "busId": 2, "voltage": 0.97, "power": 115.0}
+  ]
+}
+```
 
 **Your Answer**:
 ```python
