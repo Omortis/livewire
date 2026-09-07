@@ -1,8 +1,0 @@
-{
-  "measurements": [
-    {"timestamp": "2024-01-01T00:00", "busId": 1, "voltage": 1.02, "power": 50.5},
-    {"timestamp": "2024-01-01T00:00", "busId": 2, "voltage": 0.98, "power": 120.0},
-    {"timestamp": "2024-01-01T01:00", "busId": 1, "voltage": 1.01, "power": 48.0},
-    {"timestamp": "2024-01-01T01:00", "busId": 2, "voltage": 0.97, "power": 115.0}
-  ]
-}
