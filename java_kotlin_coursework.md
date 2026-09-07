@@ -18,9 +18,9 @@ SCADA interfaces, particularly for:
 
 IEC 61850 (Substation Automation)
 - SmartGridware provides a Java SDK for implementing IEC 61850 compliant servers — the 
-protocol used for SCADA/substation communication
+  protocol used for SCADA/substation communication
 - Java is used for MMS (Manufacturing Message Specification) stack implementation, 
-which is the core transport for IEC 61850 data
+  which is the core transport for IEC 61850 data
 
 CIM (Common Information Model) Data Exchange
 - The CIM-61850 harmonization effort uses Java frameworks:
@@ -28,7 +28,7 @@ CIM (Common Information Model) Data Exchange
 - RDF4J for querying CIM configuration files (RDF/XML format)
 - MapStruct for mapping between CIM classes and IEC 61850 classes
 - Kalkitech provides CIM-based integration platforms for SCADA, DMS, 
-EMS, GIS systems using Java
+  EMS, GIS systems using Java
 
 Enterprise Integration
 - Java web services (SOAP/XML) are commonly used for utility-to-utility data exchange (ICCP/TASE.2)
