@@ -373,10 +373,10 @@ Create a `Transformer` class that encapsulates its tap ratio and impedance. The 
 
 ---
 
-### Exercise 4.4: Polymorphism - Solver Interface
-Create an abstract base class `PowerFlowSolver` with an abstract method `solve()`. Implement two concrete classes: `NewtonRaphsonSolver` and `GaussSeidelSolver`. Each should implement `solve()` differently. Write a function `run_solver(solver: PowerFlowSolver, system_data)` that accepts any solver type and returns the solution.
+### Exercise 4.4: Polymorphism - Data Source Adapter Interface
+Create an abstract base class `PowerSystemDataSource` with an abstract method `read_measurements()`. Implement two concrete classes: `ScadaCsvAdapter` (reads CSV with columns `timestamp,bus_id,voltage_pu,power_mw`) and `Iec61850JsonAdapter` (reads JSON with nested structure). Write a function `ingest_data(source: PowerSystemDataSource)` that accepts any adapter type and returns a normalized `pandas.DataFrame` with columns `['timestamp', 'bus_id', 'voltage_pu', 'power_mw']`.
 
-*Note: Newton-Raphson is the industry standard for load flow (fast, quadratic convergence). Gauss-Seidel is simpler but slower. Different utilities use different solvers.*
+*Note: Power system data arrives in many formats — SCADA CSV exports, IEC 61850 JSON payloads, CIM/XML files, DNP3 binary streams. An ETL pipeline normalizes these disparate formats into a canonical schema before analytics and storage.*
 
 **Your Answer**:
 ```python
