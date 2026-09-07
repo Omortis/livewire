@@ -41,7 +41,21 @@ Create a Maven project that prints `"System online: Grid Monitor v1.0"` to stdou
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+package com.livewire;
+
+public class App {
+    public static void main(String[] args) {
+        System.out.println("System online: Grid Monitor v1.0");
+    }
+}
+// Output:
+// System online: Grid Monitor v1.0
+// [INFO] ------------------------------------------------------------------------
+// [INFO] BUILD SUCCESS
+// [INFO] ------------------------------------------------------------------------
+// [INFO] Total time:  1.452 s
+// [INFO] Finished at: 2026-09-07T15:26:04-04:00
+// [INFO] ------------------------------------------------------------------------
 ```
 
 ---
