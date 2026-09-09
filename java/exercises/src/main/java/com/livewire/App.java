@@ -1,24 +1,38 @@
 package com.livewire;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
-interface PowerFlowSolver {
-    double[] solve(double[] injections);
-}
+class Equipment {
+    public String id;
+    public String type;
+    public Double voltage_kv;
 
-class DcSolver implements PowerFlowSolver {
-    public double[] solve(double[] injections) {
-        return injections; // trivial pass-through
+    public Equipment(String id, String type, Double voltage) {
+        this.id = id;
+        this.type = type;
+        this.voltage_kv = voltage;
+    }
+
+    public String toString() {
+        return "id = " + id + ", type = " + type + ", voltage_kv = " + voltage_kv;
     }
 }
 
-class AcSolver implements PowerFlowSolver {
-    public double[] solve(double[] injections) {
-        double[] result = new double[injections.length];
-        for (int i = 0; i < injections.length; i++) {
-            result[i] = injections[i] * 0.95;
+class EquipmentRegistry<T> {
+    List<T> registry = new ArrayList<>();
+
+    public void add(T item) {
+        registry.add(item);
+    }
+    
+    public List<T> findBy(Predicate<T> filter) {
+        List<T> result = new ArrayList<>();
+        for (T item : registry) {
+            if (filter.test(item)) {
+                result.add(item);
+            }
         }
         return result;
     }
@@ -26,17 +40,18 @@ class AcSolver implements PowerFlowSolver {
 
 public class App {
     public static void main(String[] args) {
-        List<PowerFlowSolver> solvers = new ArrayList<>();
-        solvers.add(new DcSolver());
-        solvers.add(new AcSolver());
-        
-        double[] input = {1.0, -0.5, -0.5};
-        
-        for (PowerFlowSolver solver : solvers) {
-            System.out.println(
-                solver.getClass().getSimpleName() + ": " + 
-                Arrays.toString(solver.solve(input))
-            );
+        EquipmentRegistry<Equipment> registry = new EquipmentRegistry<>();
+
+        registry.add(new Equipment("eq1", "thermal", 55.0));
+        registry.add(new Equipment("eq2", "coal", 60.0));
+        registry.add(new Equipment("eq3", "solar", 40.0));
+        registry.add(new Equipment("eq4", "nuclear", 70.0));
+        registry.add(new Equipment("eq5", "wind", 30.0));
+
+        List<Equipment> highVoltage = registry.findBy(e -> e.voltage_kv > 50);
+
+        for (Equipment equipment : highVoltage) {
+            System.out.println(equipment);
         }
     }
 }
