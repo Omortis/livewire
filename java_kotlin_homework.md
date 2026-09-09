@@ -378,7 +378,7 @@ public class App {
 
 ## 2. Kotlin
 
-Use **Gradle with Kotlin DSL** for all Kotlin exercises. Target **Java 17+ runtime**. Each exercise should be a runnable `main` function.
+Use **Gradle with Kotlin DSL** for all Kotlin exercises. Target **Java 23 runtime** (Kotlin does not yet support a Java 26 compilation target; it falls back to JVM_23 on a Java 26 JDK). Each exercise should be a runnable `main` function.
 
 ### Exercise 2.1: Hello Kotlin Grid
 Create a Gradle Kotlin project that prints `"System online: Kotlin Grid Monitor v1.0"`. Use the Gradle Kotlin DSL (`build.gradle.kts`). Run it with `gradle run`.

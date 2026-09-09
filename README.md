@@ -117,6 +117,6 @@ git commit -m "Completed Java exercises 1.1-1.3"
 
 - macOS (primary development environment)
 - FreeBSD (secondary, where OS-specific decisions arise)
-- Java 17+ LTS (conservative enterprise target for power utilities)
+- Java 17+ LTS (Maven / Java exercises); Java 23 (Kotlin / Gradle exercises — Kotlin compiler does not yet support Java 26)
 - Python 3.10+
 - Kotlin 2.x
