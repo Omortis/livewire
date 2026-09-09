@@ -342,8 +342,8 @@ public class App {
             
             totalAlarms = paths
                 .filter(Files::isRegularFile)           // Only files, not directories
-                .filter(p -> p.toString().endsWith(".log"))  // Only .log files
-                .mapToInt(App::countAlarmsInFile)       // Count ALARM lines per file
+                .filter(p -> p.toString().endsWith(".log"))
+                .mapToInt(App::countAlarmsInFile)
                 .sum();                                 // Sum across all files
                 
         } catch (IOException e) {
