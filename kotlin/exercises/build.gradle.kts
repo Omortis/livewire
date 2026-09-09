@@ -11,6 +11,7 @@ application {
     mainClass.set("com.livewire.AppKt")
 }
 
-kotlin {
-    jvmToolchain(17)
+java {
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
 }
