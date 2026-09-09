@@ -397,6 +397,9 @@ cd kotlin/exercises
 Create `build.gradle.kts`:
 
 ```kotlin
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm") version "2.1.10"
     application
@@ -414,12 +417,31 @@ java {
     sourceCompatibility = JavaVersion.VERSION_23
     targetCompatibility = JavaVersion.VERSION_23
 }
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_23
+    }
+}
+
+// Suppress incubating problems report
+tasks.whenTaskAdded {
+    if (name == "problemsReport") {
+        enabled = false
+    }
+}
 ```
 
 Create `settings.gradle.kts`:
 
 ```kotlin
 rootProject.name = "kotlin-exercises"
+```
+
+Create `gradle.properties`:
+
+```properties
+org.gradle.warning.mode=none
 ```
 
 Run the project:
