@@ -385,6 +385,48 @@ Create a Gradle Kotlin project that prints `"System online: Kotlin Grid Monitor 
 
 *Note: This verifies your Gradle/Kotlin toolchain before adding dependencies.*
 
+**Project Setup**:
+
+Create the Gradle Kotlin project under `kotlin/exercises/`:
+
+```bash
+mkdir -p kotlin/exercises/src/main/kotlin/com/livewire
+cd kotlin/exercises
+```
+
+Create `build.gradle.kts`:
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.1.10"
+    application
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass.set("com.livewire.AppKt")
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+```
+
+Create `settings.gradle.kts`:
+
+```kotlin
+rootProject.name = "kotlin-exercises"
+```
+
+Run the project:
+
+```bash
+gradle run
+```
+
 **Your Answer**:
 ```kotlin
 // Paste your Kotlin code here
