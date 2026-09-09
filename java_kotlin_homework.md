@@ -41,7 +41,21 @@ Create a Maven project that prints `"System online: Grid Monitor v1.0"` to stdou
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+package com.livewire;
+
+public class App {
+    public static void main(String[] args) {
+        System.out.println("System online: Grid Monitor v1.0");
+    }
+}
+// Output:
+// System online: Grid Monitor v1.0
+// [INFO] ------------------------------------------------------------------------
+// [INFO] BUILD SUCCESS
+// [INFO] ------------------------------------------------------------------------
+// [INFO] Total time:  1.452 s
+// [INFO] Finished at: 2026-09-07T15:26:04-04:00
+// [INFO] ------------------------------------------------------------------------
 ```
 
 ---
@@ -61,7 +75,41 @@ Sample `equipment.json`:
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+// Equipment.java
+package com.livewire;
+
+public class Equipment {
+    public String id;
+    public String type;
+    public double voltage_kv;
+    public String status;
+}
+
+// App.java
+package com.livewire;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+
+public class App {
+    public static void main(String[] args) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        Equipment[] equipment = mapper.readValue(
+            new File("src/main/resources/equipment.json"), 
+            Equipment[].class
+        );
+        
+        for (Equipment e : equipment) {
+            System.out.println(e.id + " " + e.voltage_kv);
+        }
+    }
+}
+// Output:
+// T1 138.0
+// B1 13.8
+// [INFO] BUILD SUCCESS
+// [INFO] Total time: 0.316 s
+
 ```
 
 ---
@@ -80,7 +128,51 @@ timestamp,voltage,power,frequency
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+public class App {
+    public static void main(String[] args) {
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get("src/main/resources/scada.csv"));
+                BufferedWriter writer = Files.newBufferedWriter(Paths.get("src/main/resources/scada_clean.csv"))) {
+
+            String header = reader.readLine(); // Read header
+            writer.write(header); // Write header to output
+            writer.newLine();
+
+            String line;
+            int imputedCount = 0;
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(",");
+                float voltage = Float.parseFloat(values[1]); // values[1] = voltage column
+
+                if (voltage >= 0.95 && voltage <= 1.05) {
+                    writer.write(line);
+                    writer.newLine();
+                } else {
+                    imputedCount++;
+                }
+            }
+            System.out.println("Rejected " + imputedCount + " rows");
+        } catch (IOException e) {
+            System.err.println("ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+    }
+}
+
+// Output:
+// Rejected 1 rows
+// [INFO] ------------------------------------------------------------------------
+// [INFO] BUILD SUCCESS
+// [INFO] ------------------------------------------------------------------------
+// --> ./src/main/resources
+// ❯ cat scada_clean.csv
+// timestamp,voltage,power,frequency
+// 2024-01-01T00:00,0.98,120.5,60.01
 ```
 
 ---
@@ -92,7 +184,56 @@ Define a Java interface `PowerFlowSolver` with a single method `solve(double[] i
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+package com.livewire;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+interface PowerFlowSolver {
+    double[] solve(double[] injections);
+}
+
+class DcSolver implements PowerFlowSolver {
+    public double[] solve(double[] injections) {
+        return injections; // trivial pass-through
+    }
+}
+
+class AcSolver implements PowerFlowSolver {
+    public double[] solve(double[] injections) {
+        double[] result = new double[injections.length];
+        for (int i = 0; i < injections.length; i++) {
+            result[i] = injections[i] * 0.95;
+        }
+        return result;
+    }
+}
+
+public class App {
+    public static void main(String[] args) {
+        List<PowerFlowSolver> solvers = new ArrayList<>();
+        solvers.add(new DcSolver());
+        solvers.add(new AcSolver());
+        
+        double[] input = {1.0, -0.5, -0.5};
+        
+        for (PowerFlowSolver solver : solvers) {
+            System.out.println(
+                solver.getClass().getSimpleName() + ": " + 
+                Arrays.toString(solver.solve(input))
+            );
+        }
+    }
+}
+
+// Output:
+// [INFO] --- exec:3.6.3:java (default-cli) @ exercises ---
+// DcSolver: [1.0, -0.5, -0.5]
+// AcSolver: [0.95, -0.475, -0.475]
+// [INFO] ------------------------------------------------------------------------
+// [INFO] BUILD SUCCESS
+// [INFO] ------------------------------------------------------------------------
 ```
 
 ---
@@ -104,7 +245,72 @@ Create a generic class `EquipmentRegistry<T>` that stores items in a `List<T>` a
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+package com.livewire;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
+class Equipment {
+    public String id;
+    public String type;
+    public Double voltage_kv;
+
+    public Equipment(String id, String type, Double voltage) {
+        this.id = id;
+        this.type = type;
+        this.voltage_kv = voltage;
+    }
+
+    public String toString() {
+        return "id = " + id + ", type = " + type + ", voltage_kv = " + voltage_kv;
+    }
+}
+
+class EquipmentRegistry<T> {
+    List<T> registry = new ArrayList<>();
+
+    public void add(T item) {
+        registry.add(item);
+    }
+    
+    public List<T> findBy(Predicate<T> filter) {
+        List<T> result = new ArrayList<>();
+        for (T item : registry) {
+            if (filter.test(item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+}
+
+public class App {
+    public static void main(String[] args) {
+        EquipmentRegistry<Equipment> registry = new EquipmentRegistry<>();
+
+        registry.add(new Equipment("eq1", "thermal", 55.0));
+        registry.add(new Equipment("eq2", "coal", 60.0));
+        registry.add(new Equipment("eq3", "solar", 40.0));
+        registry.add(new Equipment("eq4", "nuclear", 70.0));
+        registry.add(new Equipment("eq5", "wind", 30.0));
+
+        List<Equipment> highVoltage = registry.findBy(e -> e.voltage_kv > 50);
+
+        for (Equipment equipment : highVoltage) {
+            System.out.println(equipment);
+        }
+    }
+}
+
+// Output:
+// [INFO] --- exec:3.6.3:java (default-cli) @ exercises ---
+// id = eq1, type = thermal, voltage_kv = 55.0
+// id = eq2, type = coal, voltage_kv = 60.0
+// id = eq4, type = nuclear, voltage_kv = 70.0
+// [INFO] ------------------------------------------------------------------------
+// [INFO] BUILD SUCCESS
+// [INFO] ------------------------------------------------------------------------
 ```
 
 ---
@@ -116,7 +322,56 @@ Use `java.nio.file.Files.walk()` to recursively find all `.log` files in a given
 
 **Your Answer**:
 ```java
-// Paste your Java code here
+package com.livewire;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
+
+public class App {
+    public static void main(String[] args) {
+        // Use command-line arg if provided, otherwise default to logs directory
+        String dirPath = args.length > 0 ? args[0] : "src/main/resources/logs";
+        
+        int totalAlarms = 0;
+        
+        // Files.walk() returns a Stream<Path> that must be closed (try-with-resources)
+        try (Stream<Path> paths = Files.walk(Paths.get(dirPath))) {
+            
+            totalAlarms = paths
+                .filter(Files::isRegularFile)           // Only files, not directories
+                .filter(p -> p.toString().endsWith(".log"))
+                .mapToInt(App::countAlarmsInFile)
+                .sum();                                 // Sum across all files
+                
+        } catch (IOException e) {
+            System.err.println("ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            System.exit(1);
+        }
+        
+        System.out.println("Total ALARM count: " + totalAlarms);
+    }
+    
+    /**
+     * Counts lines containing the word "ALARM" in a single file.
+     * Uses try-with-resources to ensure the file stream is closed.
+     */
+    private static int countAlarmsInFile(Path filePath) {
+        try (Stream<String> lines = Files.lines(filePath)) {
+            return (int) lines.filter(line -> line.contains("ALARM")).count();
+        } catch (IOException e) {
+            System.err.println("ERROR reading " + filePath + ": " + e.getMessage());
+            return 0;
+        }
+    }
+}
+
+// Output:
+// [INFO] --- exec:3.6.3:java (default-cli) @ exercises ---
+// Total ALARM count: 8
+// [INFO] BUILD SUCCESS
 ```
 
 ---

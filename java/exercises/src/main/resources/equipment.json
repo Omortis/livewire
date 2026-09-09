@@ -1,0 +1,4 @@
+[
+  {"id": "T1", "type": "Transformer", "voltage_kv": 138.0, "status": "active"},
+  {"id": "B1", "type": "Bus", "voltage_kv": 13.8, "status": "active"}
+]
