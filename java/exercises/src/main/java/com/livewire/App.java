@@ -1,37 +1,42 @@
 package com.livewire;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+interface PowerFlowSolver {
+    double[] solve(double[] injections);
+}
+
+class DcSolver implements PowerFlowSolver {
+    public double[] solve(double[] injections) {
+        return injections; // trivial pass-through
+    }
+}
+
+class AcSolver implements PowerFlowSolver {
+    public double[] solve(double[] injections) {
+        double[] result = new double[injections.length];
+        for (int i = 0; i < injections.length; i++) {
+            result[i] = injections[i] * 0.95;
+        }
+        return result;
+    }
+}
 
 public class App {
     public static void main(String[] args) {
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get("src/main/resources/scada.csv"));
-                BufferedWriter writer = Files.newBufferedWriter(Paths.get("src/main/resources/scada_clean.csv"))) {
-
-            String header = reader.readLine(); // Read header
-            writer.write(header); // Write header to output
-            writer.newLine();
-
-            String line;
-            int imputedCount = 0;
-            while ((line = reader.readLine()) != null) {
-                String[] values = line.split(",");
-                float voltage = Float.parseFloat(values[1]); // values[1] = voltage column
-
-                if (voltage >= 0.95 && voltage <= 1.05) {
-                    writer.write(line);
-                    writer.newLine();
-                } else {
-                    imputedCount++;
-                }
-            }
-            System.out.println("Rejected " + imputedCount + " rows");
-        } catch (IOException e) {
-            System.err.println("ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        List<PowerFlowSolver> solvers = new ArrayList<>();
+        solvers.add(new DcSolver());
+        solvers.add(new AcSolver());
+        
+        double[] input = {1.0, -0.5, -0.5};
+        
+        for (PowerFlowSolver solver : solvers) {
+            System.out.println(
+                solver.getClass().getSimpleName() + ": " + 
+                Arrays.toString(solver.solve(input))
+            );
         }
     }
 }
