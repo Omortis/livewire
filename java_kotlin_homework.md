@@ -430,7 +430,18 @@ gradle run
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun main() {
+    println("System online: Kotlin Grid Monitor v1.0")
+}
+
+// Output:
+
+// > Task :run
+// System online: Kotlin Grid Monitor v1.0
+
+// BUILD SUCCESSFUL in 550ms
 ```
 
 ---
