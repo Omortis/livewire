@@ -671,7 +671,49 @@ Create an extension function `List<Double>.normalize(base: Double): List<Double>
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun List<Double>.normalize(base: Double): List<Double> {
+    val normalized = this.map { it / base}
+    return normalized
+}
+
+fun List<Double>.movingAverage(window: Int): List<Double> {
+    val windows = this.windowed(size = window, step = 1)
+    return windows.map{ it.average() }
+}
+
+fun main() {
+
+    val loads = listOf(
+        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
+        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
+        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
+        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
+    )
+
+    val normalized = loads.normalize(1000.0)
+
+    val windowList = normalized.movingAverage(3)
+
+    println("Loads normalized to 1000 MW:")
+    normalized.forEach {
+        print("${String.format("%.2f", it)}, ")
+    }
+    println()
+    println("Running 3 hour averages:")
+    windowList.forEach {
+        print("${String.format("%.2f", it)}, ")
+    }
+}
+
+// Output:
+// > Task :run
+// Loads normalized to 1000 MW:
+// 0.42, 0.38, 0.35, 0.34, 0.34, 0.36, 0.41, 0.52, 0.68, 0.75, 0.82, 0.89, 0.91, 0.87, 0.81, 0.76, 0.72, 0.65, 0.58, 0.52, 0.48, 0.45, 0.43, 0.41,
+// Running 3 hour averages:
+// 0.38, 0.36, 0.34, 0.35, 0.37, 0.43, 0.54, 0.65, 0.75, 0.82, 0.87, 0.89, 0.86, 0.81, 0.76, 0.71, 0.65, 0.58, 0.53, 0.48, 0.45, 0.43,
+// BUILD SUCCESSFUL in 416ms
 ```
 
 ---
