@@ -1,26 +1,29 @@
 package com.livewire
 
-data class Breaker(val id: String, val status: String, val currentAmps: Double?)
-
 fun main() {
-
-    val breakers = listOf(
-        Breaker("BRK-101", "CLOSED", 1250.54321),
-        Breaker("BRK-102", "OPEN", null),     // null current — de-energized
-        Breaker("BRK-103", "TRIPPED", 0.001),
-        Breaker("BRK-104", "CLOSED", 980.2223),
-        Breaker("BRK-105", "MAINTENANCE", null)
+    // 24 hourly load readings in MW
+    val loads = listOf(
+        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
+        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
+        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
+        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
     )
 
-    val amps = mutableListOf<Double?>()
-    var nonNullCounter = 0
-    breakers.forEach {
-        print("id = ${it.id}, status = ${it.status}, ")
-        val ampString = it.currentAmps?.let { String.format("%.1f", it) } ?: "No reading"
-        println("currentAmps = ${ampString}")
-        amps += it.currentAmps
+    val averageLoad = loads.average()
+    val peakLoad = loads.maxOrNull()
+    val hoursAbove500 = loads.count { it > 500.0 }
+    val puLoads = loads.map { it / 1000.0 }
+
+    println("List of loads:")
+    loads.forEach{
+        print("${it}, ")
     }
-    
-    val notNull = amps.filterNotNull()
-    println("breakers contains ${notNull.size} valid readings.")
+    println("\naverage load: ${String.format("%.2f", averageLoad)}")
+    println("peak load: ${peakLoad}")
+    println("Number of hours above 500 MW: ${hoursAbove500}")
+    println("Loads normalized to 1000 MW:")
+    puLoads.forEach{
+        print("${String.format("%.2f", it)}, ")
+    }
+
 }

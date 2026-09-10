@@ -523,7 +523,46 @@ Given a list of hourly load readings `List<Double>` (24 values), use Kotlin coll
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun main() {
+    // 24 hourly load readings in MW
+    val loads = listOf(
+        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
+        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
+        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
+        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
+    )
+
+    val averageLoad = loads.average()
+    val peakLoad = loads.maxOrNull()
+    val hoursAbove500 = loads.count { it > 500.0 }
+    val puLoads = loads.map { it / 1000.0 }
+
+    println("List of loads:")
+    loads.forEach{
+        print("${it}, ")
+    }
+    println("\naverage load: ${String.format("%.2f", averageLoad)}")
+    println("peak load: ${peakLoad}")
+    println("Number of hours above 500 MW: ${hoursAbove500}")
+    println("Loads normalized to 1000 MW:")
+    puLoads.forEach{
+        print("${String.format("%.2f", it)}, ")
+    }
+
+}
+
+// Output:
+// > Task :run
+// List of loads:
+// 420.5, 380.2, 350.1, 340.0, 335.5, 360.0, 410.2, 520.5, 680.3, 750.1, 820.0, 890.5, 910.2, 870.3, 810.5, 760.2, 720.0, 650.3, 580.5, 520.0, 480.3, 450.2, 430.1, 405.0,
+// average load: 576.90
+// peak load: 910.2
+// Number of hours above 500 MW: 13
+// Loads normalized to 1000 MW:
+// 0.42, 0.38, 0.35, 0.34, 0.34, 0.36, 0.41, 0.52, 0.68, 0.75, 0.82, 0.89, 0.91, 0.87, 0.81, 0.76, 0.72, 0.65, 0.58, 0.52, 0.48, 0.45, 0.43, 0.41,
+// BUILD SUCCESSFUL in 519ms
 ```
 
 ---
