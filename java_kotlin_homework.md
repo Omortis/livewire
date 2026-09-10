@@ -475,7 +475,43 @@ Define a Kotlin data class `Breaker(val id: String, val status: String, val curr
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+data class Breaker(val id: String, val status: String, val currentAmps: Double?)
+
+fun main() {
+
+    val breakers = listOf(
+        Breaker("BRK-101", "CLOSED", 1250.54321),
+        Breaker("BRK-102", "OPEN", null),     // null current — de-energized
+        Breaker("BRK-103", "TRIPPED", 0.001),
+        Breaker("BRK-104", "CLOSED", 980.2223),
+        Breaker("BRK-105", "MAINTENANCE", null)
+    )
+
+    val amps = mutableListOf<Double?>()
+    var nonNullCounter = 0
+    breakers.forEach {
+        print("id = ${it.id}, status = ${it.status}, ")
+        val ampString = it.currentAmps?.let { String.format("%.1f", it) } ?: "No reading"
+        println("currentAmps = ${ampString}")
+        amps += it.currentAmps
+    }
+    
+    val notNull = amps.filterNotNull()
+    println("breakers contains ${notNull.size} valid readings.")
+}
+
+// Output:
+// > Task :run
+// id = BRK-101, status = CLOSED, currentAmps = 1250.5
+// id = BRK-102, status = OPEN, currentAmps = No reading
+// id = BRK-103, status = TRIPPED, currentAmps = 0.0
+// id = BRK-104, status = CLOSED, currentAmps = 980.2
+// id = BRK-105, status = MAINTENANCE, currentAmps = No reading
+// breakers contains 3 valid readings.
+
+// BUILD SUCCESSFUL in 435ms
 ```
 
 ---
