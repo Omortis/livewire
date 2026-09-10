@@ -1,29 +1,30 @@
 package com.livewire
 
-fun main() {
-    // 24 hourly load readings in MW
-    val loads = listOf(
-        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
-        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
-        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
-        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
-    )
+import kotlinx.coroutines.*
+import kotlin.random.Random
 
-    val averageLoad = loads.average()
-    val peakLoad = loads.maxOrNull()
-    val hoursAbove500 = loads.count { it > 500.0 }
-    val puLoads = loads.map { it / 1000.0 }
+// runBlocking:
+//  1. Creates a coroutine scope — a container where coroutines can live
+//  2. Blocks the calling thread — in this case, the main thread — until
+//     every coroutine inside the block finishes
+//  3. Returns the result of the last expression in the block
+//
+// Dispatchers.Default:
+// https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
 
-    println("List of loads:")
-    loads.forEach{
-        print("${it}, ")
+fun main() = runBlocking(Dispatchers.Default) {
+    // launch three async tasks
+    val v1 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    val v2 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    val v3 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    
+    // collect results
+    val results = listOf(v1.await(), v2.await(), v3.await())
+    println("Voltages returned from external sources:")
+    results.forEach{
+        println("\t%.4f".format(it))
     }
-    println("\naverage load: ${String.format("%.2f", averageLoad)}")
-    println("peak load: ${peakLoad}")
-    println("Number of hours above 500 MW: ${hoursAbove500}")
-    println("Loads normalized to 1000 MW:")
-    puLoads.forEach{
-        print("${String.format("%.2f", it)}, ")
-    }
-
+    val average = results.average()
+    
+    println("Average voltage: %.4f".format(average))
 }
