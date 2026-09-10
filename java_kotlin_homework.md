@@ -378,16 +378,92 @@ public class App {
 
 ## 2. Kotlin
 
-Use **Gradle with Kotlin DSL** for all Kotlin exercises. Target **Java 17+ runtime**. Each exercise should be a runnable `main` function.
+Use **Gradle with Kotlin DSL** for all Kotlin exercises. Target **Java 23 runtime** (Kotlin does not yet support a Java 26 compilation target; it falls back to JVM_23 on a Java 26 JDK). Each exercise should be a runnable `main` function.
 
 ### Exercise 2.1: Hello Kotlin Grid
 Create a Gradle Kotlin project that prints `"System online: Kotlin Grid Monitor v1.0"`. Use the Gradle Kotlin DSL (`build.gradle.kts`). Run it with `gradle run`.
 
 *Note: This verifies your Gradle/Kotlin toolchain before adding dependencies.*
 
+**Project Setup**:
+
+Create the Gradle Kotlin project under `kotlin/exercises/`:
+
+```bash
+mkdir -p kotlin/exercises/src/main/kotlin/com/livewire
+cd kotlin/exercises
+```
+
+Create `build.gradle.kts`:
+
+```kotlin
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    kotlin("jvm") version "2.1.10"
+    application
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass.set("com.livewire.AppKt")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_23
+    }
+}
+
+// Suppress incubating problems report
+tasks.whenTaskAdded {
+    if (name == "problemsReport") {
+        enabled = false
+    }
+}
+```
+
+Create `settings.gradle.kts`:
+
+```kotlin
+rootProject.name = "kotlin-exercises"
+```
+
+Create `gradle.properties`:
+
+```properties
+org.gradle.warning.mode=none
+```
+
+Run the project:
+
+```bash
+gradle run
+```
+
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun main() {
+    println("System online: Kotlin Grid Monitor v1.0")
+}
+
+// Output:
+
+// > Task :run
+// System online: Kotlin Grid Monitor v1.0
+
+// BUILD SUCCESSFUL in 550ms
 ```
 
 ---
@@ -399,7 +475,43 @@ Define a Kotlin data class `Breaker(val id: String, val status: String, val curr
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+data class Breaker(val id: String, val status: String, val currentAmps: Double?)
+
+fun main() {
+
+    val breakers = listOf(
+        Breaker("BRK-101", "CLOSED", 1250.54321),
+        Breaker("BRK-102", "OPEN", null),     // null current — de-energized
+        Breaker("BRK-103", "TRIPPED", 0.001),
+        Breaker("BRK-104", "CLOSED", 980.2223),
+        Breaker("BRK-105", "MAINTENANCE", null)
+    )
+
+    val amps = mutableListOf<Double?>()
+    var nonNullCounter = 0
+    breakers.forEach {
+        print("id = ${it.id}, status = ${it.status}, ")
+        val ampString = it.currentAmps?.let { String.format("%.1f", it) } ?: "No reading"
+        println("currentAmps = ${ampString}")
+        amps += it.currentAmps
+    }
+    
+    val notNull = amps.filterNotNull()
+    println("breakers contains ${notNull.size} valid readings.")
+}
+
+// Output:
+// > Task :run
+// id = BRK-101, status = CLOSED, currentAmps = 1250.5
+// id = BRK-102, status = OPEN, currentAmps = No reading
+// id = BRK-103, status = TRIPPED, currentAmps = 0.0
+// id = BRK-104, status = CLOSED, currentAmps = 980.2
+// id = BRK-105, status = MAINTENANCE, currentAmps = No reading
+// breakers contains 3 valid readings.
+
+// BUILD SUCCESSFUL in 435ms
 ```
 
 ---
@@ -411,7 +523,46 @@ Given a list of hourly load readings `List<Double>` (24 values), use Kotlin coll
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun main() {
+    // 24 hourly load readings in MW
+    val loads = listOf(
+        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
+        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
+        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
+        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
+    )
+
+    val averageLoad = loads.average()
+    val peakLoad = loads.maxOrNull()
+    val hoursAbove500 = loads.count { it > 500.0 }
+    val puLoads = loads.map { it / 1000.0 }
+
+    println("List of loads:")
+    loads.forEach{
+        print("${it}, ")
+    }
+    println("\naverage load: ${String.format("%.2f", averageLoad)}")
+    println("peak load: ${peakLoad}")
+    println("Number of hours above 500 MW: ${hoursAbove500}")
+    println("Loads normalized to 1000 MW:")
+    puLoads.forEach{
+        print("${String.format("%.2f", it)}, ")
+    }
+
+}
+
+// Output:
+// > Task :run
+// List of loads:
+// 420.5, 380.2, 350.1, 340.0, 335.5, 360.0, 410.2, 520.5, 680.3, 750.1, 820.0, 890.5, 910.2, 870.3, 810.5, 760.2, 720.0, 650.3, 580.5, 520.0, 480.3, 450.2, 430.1, 405.0,
+// average load: 576.90
+// peak load: 910.2
+// Number of hours above 500 MW: 13
+// Loads normalized to 1000 MW:
+// 0.42, 0.38, 0.35, 0.34, 0.34, 0.36, 0.41, 0.52, 0.68, 0.75, 0.82, 0.89, 0.91, 0.87, 0.81, 0.76, 0.72, 0.65, 0.58, 0.52, 0.48, 0.45, 0.43, 0.41,
+// BUILD SUCCESSFUL in 519ms
 ```
 
 ---
@@ -423,7 +574,46 @@ Simulate polling three different SCADA data sources concurrently. Use Kotlin cor
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+import kotlinx.coroutines.*
+import kotlin.random.Random
+
+// runBlocking:
+//  1. Creates a coroutine scope — a container where coroutines can live
+//  2. Blocks the calling thread — in this case, the main thread — until
+//     every coroutine inside the block finishes
+//  3. Returns the result of the last expression in the block
+//
+// Dispatchers.Default:
+// https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-dispatchers/-default.html
+
+fun main() = runBlocking(Dispatchers.Default) {
+    // launch three async tasks
+    val v1 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    val v2 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    val v3 = async { delay(1000); Random.nextDouble(0.95, 1.05) }
+    
+    // collect results
+    val results = listOf(v1.await(), v2.await(), v3.await())
+    println("Voltages returned from external sources:")
+    results.forEach{
+        println("\t%.4f".format(it))
+    }
+    val average = results.average()
+    
+    println("Average voltage: %.4f".format(average))
+}
+
+// Output:
+// > Task :run
+// Voltages returned from external sources:
+//         0.9577
+//         0.9652
+//         1.0301
+// Average voltage: 0.9843
+
+// BUILD SUCCESSFUL in 1s
 ```
 
 ---
@@ -435,7 +625,41 @@ Define a sealed class `ScadaMessage` with subclasses `AnalogValue(val value: Dou
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+sealed class ScadaMessage
+
+class AnalogValue(val value: Double) : ScadaMessage()
+class DigitalStatus(val state: Boolean) : ScadaMessage()
+class Alarm(val severity: Int) : ScadaMessage()
+
+fun handleMessage(msg: ScadaMessage): String = when (msg) {
+    is AnalogValue -> "Analog: ${msg.value}"
+    is DigitalStatus -> "Digital Status: ${msg.state}"
+    is Alarm -> "Alarm: ${msg.severity}"
+}
+
+fun main() {
+
+    var analogValue = AnalogValue(12.34)
+    var digitalStatus = DigitalStatus(false)
+    var alarm = Alarm(0)
+
+    println("Messages returned:")
+    println("\t${handleMessage(analogValue)}")
+    println("\t${handleMessage(digitalStatus)}")
+    println("\t${handleMessage(alarm)}")
+
+}
+
+// Output:
+// > Task :run
+// Messages returned:
+//         Analog: 12.34
+//         Digital Status: false
+//         Alarm: 0
+
+// BUILD SUCCESSFUL in 412ms
 ```
 
 ---
@@ -447,7 +671,49 @@ Create an extension function `List<Double>.normalize(base: Double): List<Double>
 
 **Your Answer**:
 ```kotlin
-// Paste your Kotlin code here
+package com.livewire
+
+fun List<Double>.normalize(base: Double): List<Double> {
+    val normalized = this.map { it / base}
+    return normalized
+}
+
+fun List<Double>.movingAverage(window: Int): List<Double> {
+    val windows = this.windowed(size = window, step = 1)
+    return windows.map{ it.average() }
+}
+
+fun main() {
+
+    val loads = listOf(
+        420.5, 380.2, 350.1, 340.0, 335.5, 360.0,
+        410.2, 520.5, 680.3, 750.1, 820.0, 890.5,
+        910.2, 870.3, 810.5, 760.2, 720.0, 650.3,
+        580.5, 520.0, 480.3, 450.2, 430.1, 405.0
+    )
+
+    val normalized = loads.normalize(1000.0)
+
+    val windowList = normalized.movingAverage(3)
+
+    println("Loads normalized to 1000 MW:")
+    normalized.forEach {
+        print("${String.format("%.2f", it)}, ")
+    }
+    println()
+    println("Running 3 hour averages:")
+    windowList.forEach {
+        print("${String.format("%.2f", it)}, ")
+    }
+}
+
+// Output:
+// > Task :run
+// Loads normalized to 1000 MW:
+// 0.42, 0.38, 0.35, 0.34, 0.34, 0.36, 0.41, 0.52, 0.68, 0.75, 0.82, 0.89, 0.91, 0.87, 0.81, 0.76, 0.72, 0.65, 0.58, 0.52, 0.48, 0.45, 0.43, 0.41,
+// Running 3 hour averages:
+// 0.38, 0.36, 0.34, 0.35, 0.37, 0.43, 0.54, 0.65, 0.75, 0.82, 0.87, 0.89, 0.86, 0.81, 0.76, 0.71, 0.65, 0.58, 0.53, 0.48, 0.45, 0.43,
+// BUILD SUCCESSFUL in 416ms
 ```
 
 ---
